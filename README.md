@@ -27,18 +27,6 @@ A lightweight Manifest V3 extension that
 
 ---
 
-## 📁 Folder structure
-
-unity-sales-extension/ ├─ manifest.json ├─ background.js ├─ popup.html ├─ popup.js └─ icons/ └─ icon48.png
-
-yaml
-Копировать
-Редактировать
-
-*(Add 16 / 128 px icons if desired.)*
-
----
-
 ## 🚀 Install locally
 
 1. **Clone** or download this repo.  

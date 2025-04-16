@@ -1,0 +1,22 @@
+{
+  "name": "Unity Sales Viewer",
+  "version": "1.0",
+  "manifest_version": 3,
+  "description": "Checks Unity Publisher sales, notifies on new sales, and displays them in a nice table.",
+  "permissions": [
+    "cookies",
+    "storage",
+    "alarms",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://publisher.unity.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Unity Sales"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

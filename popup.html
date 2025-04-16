@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Unity Sales</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 1em;
+      width: 420px;              
+      box-sizing: border-box;
+    }
+
+    /* refresh button */
+    #refreshBtn {
+      display: block;
+      margin-bottom: 0.8em;
+      padding: 0.45em 1em;
+      cursor: pointer;
+    }
+
+    /* Totals line */
+    .totals {
+      margin-bottom: 0.5em;
+      font-weight: bold;
+      line-height: 1.4;
+    }
+
+    /* Table container lets user scroll if table is wider/taller */
+    .table-container {
+      max-height: 400px;         
+      overflow: auto;
+    }
+
+    /* Table */
+    #salesTable {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 640px;           
+      table-layout: auto;
+    }
+
+    #salesTable th,
+    #salesTable td {
+      border: 1px solid #ccc;
+      padding: 0.4em 0.5em;
+      white-space: nowrap;        
+      text-align: left;
+    }
+
+    #salesTable th {
+      background: #f3f3f3;
+    }
+  </style>
+</head>
+
+<body>
+  <h1 style="margin-top: 0">Unity Sales</h1>
+
+  <button id="refreshBtn">Refresh Sales</button>
+
+  <div class="totals">
+    Gross $ <span id="totalGross">–</span> &nbsp;|&nbsp;
+    Revenue $ <span id="totalRevenue">–</span>
+  </div>
+
+  <div class="table-container">
+    <table id="salesTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Gross</th>
+          <th>Revenue</th>
+          <th>Sales</th>
+          <th>Refunds</th>
+          <th>Chargebacks</th>
+          <th>First</th>
+          <th>Last</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

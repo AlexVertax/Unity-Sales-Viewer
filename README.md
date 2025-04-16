@@ -64,15 +64,13 @@ showSessionExpiredNotification();
 
 // Test “new sales” – pretend 3 new items
 showNewSalesNotification(3);
+```
 Each command fires the corresponding notification so you can verify layout and click‑through behaviour.
 
 🔧 Tweaks
 
-Change this …	… in this file/const
 Poll interval (minutes)	CHECK_INTERVAL_MINUTES in background.js
-Date param logic	checkForNewSales() in background.js
-New‑sale detection method	Same function (compare IDs, timestamps, …)
-Table columns / order	<thead> in popup.html + builder in popup.js
+
 🛡️ Privacy
 All API calls go only to Unity’s own domain.
 No analytics, no third‑party requests, no data leaves your machine.
@@ -80,5 +78,3 @@ No analytics, no third‑party requests, no data leaves your machine.
 📜 License
 MIT – free to use, modify, share. No warranty.
 
-Копировать
-Редактировать

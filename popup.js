@@ -1,71 +1,97 @@
 document.addEventListener("DOMContentLoaded", () => {
+
+  /* ---------- ELEMENTS ---------- */
   const refreshBtn      = document.getElementById("refreshBtn");
-  const salesTableBody  = document.querySelector("#salesTable tbody");
   const totalGrossEl    = document.getElementById("totalGross");
   const totalRevenueEl  = document.getElementById("totalRevenue");
+  const salesTBody      = document.querySelector("#salesTable tbody");
+  const reviewsTBody    = document.querySelector("#reviewsTable tbody");
+  const tabs   = [...document.querySelectorAll(".tab")];
+  const panels = [...document.querySelectorAll("[data-panel]")];
 
-  /* ---------- INITIAL LOAD: show cached data if we have it ---------- */
-  chrome.runtime.sendMessage({ type: "GET_CACHED_SALES" }, (res) => {
-    if (res?.success && Array.isArray(res.data)) {
-      renderTable(res.data);
-    }
+  /* ---------- TAB HANDLING ---------- */
+  function switchTo(name){
+    tabs.forEach(b => b.classList.toggle("active", b.dataset.tab===name));
+    panels.forEach(p => p.style.display = (p.dataset.panel===name) ? "" : "none");
+  }
+  tabs.forEach(btn => btn.onclick = () => switchTo(btn.dataset.tab));
+
+  /* ---------- INITIAL DATA (cached) ---------- */
+  chrome.runtime.sendMessage({ type:"GET_CACHED_SALES" }, r=>{
+    if(r?.success) renderSales(r.data);
+  });
+  chrome.runtime.sendMessage({ type:"GET_CACHED_REVIEWS" }, r=>{
+    if(r?.success) renderReviews(r.data);
   });
 
-  /* ---------- REFRESH BUTTON ---------- */
-  refreshBtn.addEventListener("click", () => {
-    // quick visual placeholder
-    salesTableBody.innerHTML = "";
-    totalGrossEl.textContent   = totalRevenueEl.textContent = "…";
+  /* ---------- REFRESH ---------- */
+  refreshBtn.onclick = () => {
+    const active = document.querySelector(".tab.active")?.dataset.tab || "sales";
+    active === "sales" ? fetchSales() : fetchReviews();
+  };
 
-    chrome.runtime.sendMessage({ type: "FETCH_SALES" }, (res) => {
-      if (res?.success && Array.isArray(res.data)) {
-        renderTable(res.data);
-      } else {
-        console.error(res?.error || "Unknown error");
-        alert("Unable to fetch sales – see console for details.");
-        totalGrossEl.textContent = totalRevenueEl.textContent = "–";
-      }
+  /* ---------- FETCH FUNCTIONS ---------- */
+  function fetchSales(){
+    blankSales();   // quick visual reset
+    chrome.runtime.sendMessage({ type:"FETCH_SALES" }, res=>{
+      if(res?.success) renderSales(res.data);
+      else alert("Sales fetch failed (see console).");
     });
-  });
+  }
+  function fetchReviews(){
+    blankReviews();
+    chrome.runtime.sendMessage({ type:"FETCH_REVIEWS" }, res=>{
+      if(res?.success) renderReviews(res.data);
+      else alert("Review fetch failed (see console).");
+    });
+  }
 
-  /* ---------- RENDER FUNCTION ---------- */
-  function renderTable(data) {
-    salesTableBody.innerHTML = "";
-    let grossSum = 0;
-    let revSum   = 0;
-
-    data.forEach((item) => {
-      // Build one row
+  /* ---------- RENDER SALES ---------- */
+  function renderSales(list){
+    blankSales();
+    let grossSum=0, revSum=0;
+    list.forEach(it=>{
       const tr = document.createElement("tr");
-      appendCell(tr, item.name);
-      appendCell(tr, item.price);
-      appendCell(tr, item.gross);
-      appendCell(tr, item.revenue);
-      appendCell(tr, item.sales);
-      appendCell(tr, item.refunds);
-      appendCell(tr, item.chargebacks);
-      appendCell(tr, item.first);
-      appendCell(tr, item.last);
-      salesTableBody.appendChild(tr);
-
-      grossSum += parseNumber(item.gross);
-      revSum   += parseNumber(item.revenue);
+      addCell(tr,it.name);
+      addCell(tr,it.price);
+      addCell(tr,it.gross);
+      addCell(tr,it.revenue);
+      addCell(tr,it.sales);
+      addCell(tr,it.refunds);
+      addCell(tr,it.chargebacks);
+      addCell(tr,it.first);
+      addCell(tr,it.last);
+      salesTBody.appendChild(tr);
+      grossSum += toNum(it.gross);
+      revSum   += toNum(it.revenue);
     });
-
     totalGrossEl.textContent   = grossSum.toFixed(2);
     totalRevenueEl.textContent = revSum.toFixed(2);
   }
 
-  /* ---------- UTILITIES ---------- */
-  function appendCell(row, text) {
-    const td = document.createElement("td");
+  /* ---------- RENDER REVIEWS ---------- */
+  function renderReviews(list){
+    blankReviews();
+    list.forEach(rv=>{
+      const tr = document.createElement("tr");
+      addCell(tr, rv.createdTime?.slice(0,10));
+      addCell(tr, rv.packageName);
+      addCell(tr, rv.rating);
+      addCell(tr, rv.subject);
+      addCell(tr, shorten(rv.body,80));
+      reviewsTBody.appendChild(tr);
+    });
+  }
+
+  /* ---------- HELPERS ---------- */
+  function addCell(row,text){
+    const td=document.createElement("td");
     td.textContent = text ?? "";
     row.appendChild(td);
   }
+  const toNum = s => parseFloat((s??"").replace(/[^0-9.\-]/g,""))||0;
+  const shorten = (t,max)=> (t||"").length>max ? (t.slice(0,max)+"…") : (t||"");
+  function blankSales(){ salesTBody.innerHTML=""; totalGrossEl.textContent=totalRevenueEl.textContent="–"; }
+  function blankReviews(){ reviewsTBody.innerHTML=""; }
 
-  function parseNumber(str) {
-    // Converts "200.00", "$200", etc. -> 200
-    const n = parseFloat((str ?? "").toString().replace(/[^0-9.\-]/g, ""));
-    return isNaN(n) ? 0 : n;
-  }
 });

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Unity Sales</title>
+<title>Unity Publisher Dashboard</title>
 
 <!-- Google Font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,124 +10,106 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-  :root {
-    --accent: #0077ff;
-    --border: #d0d4d9;
-    --bg-card: #ffffff;
-    --bg-table-head: #f1f3f6;
-    --bg-zebra: #fafbfc;
-    --bg-status: #f5f7fa;
-    --text-dark: #202124;
-    --text-muted: #5f6368;
+  :root{
+    --accent:#0077ff;  --border:#d0d4d9; --bg-card:#fff;
+    --bg-head:#f1f3f6; --bg-zebra:#fafbfc; --bg-status:#f5f7fa;
+    --text:#202124;    --muted:#5f6368;
   }
 
-  /* --- base --- */
-  html, body {
-    margin: 0;
-    padding: 0;
-    font-family: "Inter", Arial, sans-serif;
-    color: var(--text-dark);
-    width: 570px;               /* ⬅  Popup width (max 800 allowed) */
-    box-sizing: border-box;
-  }
+  html,body{margin:0;padding:0;font-family:"Inter",Arial,sans-serif;color:var(--text);width:760px;box-sizing:border-box}
+  .card{padding:22px 24px 20px;border-radius:10px;background:var(--bg-card);box-shadow:0 2px 6px rgba(0,0,0,.08)}
 
-  /* --- card --- */
-  .card {
-    padding: 22px 24px 20px;
-    background: var(--bg-card);
-    box-shadow: 0 2px 6px rgba(0,0,0,.08);
-    border-radius: 10px;
-  }
+  h1{margin:0 0 14px;font-size:22px;font-weight:600}
 
-  h1 {
-    margin: 0 0 14px;
-    font-size: 22px;
-    font-weight: 600;
-  }
+  /* ----- TAB BAR ----- */
+  .tabbar{
+  display:flex;
+  gap:0;
+  margin-bottom:14px;
+  border-bottom:1px solid var(--border);        /* baseline for tabs */
+}
 
-  /* --- button --- */
-  #refreshBtn {
-    all: unset;
-    display: inline-block;
-    padding: 7px 20px;
-    background: var(--accent);
-    color: #fff;
-    border-radius: 26px;
-    font-size: 15px;
-    cursor: pointer;
-    transition: background .15s;
-    user-select: none;
-  }
-  #refreshBtn:hover  { background: #0066e0; }
-  #refreshBtn:active { background: #0057c2; }
+.tab{
+  all:unset;
+  cursor:pointer;
+  padding:8px 22px 7px;
+  font-size:14px;
+  color:#444;
+  background:#e8eaed;
+  border:1px solid var(--border);
+  border-bottom:none;                           /* let active tab merge with card */
+  border-radius:10px 10px 0 0;
+  margin-right:3px;
+  position:relative;
+  top:1px;                                      /* sit 1 px lower so border aligns */
+  transition:background .15s;
+}
 
-  /* --- totals bar --- */
-  .status {
-    margin: 16px 0 12px;
-    padding: 9px 14px;
-    background: var(--bg-status);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 15px;
-    display: flex;
-    gap: 32px;
-  }
-  .status span.value { font-weight: 600; }
+.tab:hover  { background:#dfe2e6; }
+.tab.active{
+  background:var(--bg-card);                    /* same white as card */
+  color:var(--text);
+  font-weight:600;
+}
 
-  /* --- table box --- */
-  .table-box {
-    max-height: 400px;
-    overflow-y: auto;          /* vertical scroll only if needed      */
-  }
+  /* ----- REFRESH BTN ----- */
+  #refreshBtn{all:unset;display:inline-block;margin-bottom:12px;padding:7px 20px;
+              background:var(--accent);color:#fff;border-radius:26px;font-size:15px;cursor:pointer;user-select:none}
+  #refreshBtn:hover{background:#0066e0} #refreshBtn:active{background:#0057c2}
 
-  /* --- table --- */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-  }
-  thead th {
-    background: var(--bg-table-head);
-    font-weight: 600;
-    border-bottom: 1px solid var(--border);
-    padding: 9px 10px;
-    text-align: left;
-    white-space: nowrap;
-  }
-  tbody tr:nth-child(even) { background: var(--bg-zebra); }
-  tbody td {
-    border-bottom: 1px solid var(--border);
-    padding: 7px 10px;
-    white-space: nowrap;
-    color: var(--text-muted);
-  }
+  /* ----- STATUS (sales only) ----- */
+  .status{margin:10px 0 12px;padding:9px 14px;background:var(--bg-status);
+          border:1px solid var(--border);border-radius:8px;font-size:15px;display:flex;gap:32px}
+  .status .value{font-weight:600}
+
+  /* ----- TABLE BOX ----- */
+  .table-box{max-height:400px;overflow-y:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  thead th{background:var(--bg-head);font-weight:600;border-bottom:1px solid var(--border);padding:9px 10px;text-align:left;white-space:nowrap}
+  tbody tr:nth-child(even){background:var(--bg-zebra)}
+  tbody td{border-bottom:1px solid var(--border);padding:7px 10px;white-space:nowrap;color:var(--muted)}
 </style>
 </head>
 
 <body>
   <div class="card">
 
-    <h1>Unity Publisher Sales</h1>
-    <button id="refreshBtn">Refresh Sales</button>
+    <h1>Unity Publisher Dashboard</h1>
 
-    <div class="status">
+    <!-- TAB BAR -->
+    <div class="tabbar">
+      <button class="tab active" data-tab="sales">Sales</button>
+      <button class="tab"          data-tab="reviews">Reviews</button>
+    </div>
+
+    <button id="refreshBtn">Refresh</button>
+
+    <!-- SALES TOTALS -->
+    <div class="status" data-panel="sales">
       Gross $&nbsp;<span id="totalGross"   class="value">–</span>
       Revenue $&nbsp;<span id="totalRevenue" class="value">–</span>
     </div>
 
-    <div class="table-box">
+    <!-- SALES TABLE -->
+    <div class="table-box" data-panel="sales">
       <table id="salesTable">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Price</th>
-            <th>Gross</th>
-            <th>Revenue</th>
-            <th>Sales</th>
-            <th>Refunds</th>
-            <th>Chargebacks</th>
-            <th>First</th>
-            <th>Last</th>
+            <th>Name</th><th>Price</th><th>Gross</th><th>Revenue</th>
+            <th>Sales</th><th>Refunds</th><th>Chargebacks</th>
+            <th>First</th><th>Last</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- REVIEWS TABLE -->
+    <div class="table-box" data-panel="reviews" style="display:none;">
+      <table id="reviewsTable">
+        <thead>
+          <tr>
+            <th>Date</th><th>Asset</th><th>Rating</th><th>Subject</th><th>Body&nbsp;(preview)</th>
           </tr>
         </thead>
         <tbody></tbody>

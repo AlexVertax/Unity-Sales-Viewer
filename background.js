@@ -1,8 +1,10 @@
 const CHECK_INTERVAL_MINUTES = 10;
 const NOTIFICATION_ID_EXPIRED = "unitySales-sessionExpired";
 const NOTIFICATION_ID_NEW_SALES = "unitySales-newSales";
+const NOTIFICATION_ID_NEW_REVIEWS = "unitySales-newReviews";
 
 let lastFetchedData = null;  // We'll keep the most recent sales data here
+let lastFetchedReviews = null;  // reviews array
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.alarms.clear("checkSales", () => {
@@ -14,29 +16,51 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "checkSales") {
+    
     checkForNewSales();
+    checkForNewReviews();
   }
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+
+  /* ---------- SALES ---------- */
   if (message.type === "FETCH_SALES") {
     checkForNewSales()
-      .then((data) => sendResponse({ success: true, data }))
-      .catch((err) => sendResponse({ success: false, error: err.message }));
-    return true; // Indicates async response
+      .then(d => sendResponse({ success:true, data:d }))
+      .catch(e => sendResponse({ success:false, error:e.message }));
+    return true;               // async
   }
 
-  else if (message.type === "GET_CACHED_SALES") {
-    chrome.storage.local.get("lastSalesData", (res) => {
-      if (Array.isArray(res.lastSalesData)) {
-        sendResponse({ success: true, data: res.lastSalesData });
-      } else {
-        sendResponse({ success: false, error: "No data cached yet." });
-      }
+  if (message.type === "GET_CACHED_SALES") {
+    chrome.storage.local.get("lastSalesData", r => {
+      if (Array.isArray(r.lastSalesData))
+        sendResponse({ success:true, data:r.lastSalesData });
+      else
+        sendResponse({ success:false, error:"No cached sales yet." });
     });
-    return true;          // async response
+    return true;
+  }
+
+  /* ---------- REVIEWS ---------- */
+  if (message.type === "FETCH_REVIEWS") {
+    checkForNewReviews()
+      .then(d => sendResponse({ success:true, data:d }))
+      .catch(e => sendResponse({ success:false, error:e.message }));
+    return true;
+  }
+
+  if (message.type === "GET_CACHED_REVIEWS") {
+    chrome.storage.local.get("lastReviewsData", r => {
+      if (Array.isArray(r.lastReviewsData))
+        sendResponse({ success:true, data:r.lastReviewsData });
+      else
+        sendResponse({ success:false, error:"No cached reviews yet." });
+    });
+    return true;
   }
 });
+
 
 async function checkForNewSales() {
   try {
@@ -99,6 +123,50 @@ async function checkForNewSales() {
   }
 }
 
+async function checkForNewReviews() {
+  const csrfToken = await getCsrfCookie();
+  if (!csrfToken) { showSessionExpiredNotification(); return []; }
+
+  const url  = "https://publisher.unity.com/publisher-v2-api/review/list";
+  const body = { page: 1, perPage: 100 };        // tweak as you like
+
+  const res = await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "X-CSRF-Token": csrfToken,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) showSessionExpiredNotification();
+    throw new Error(`Review fetch failed ${res.status}`);
+  }
+
+  const json = await res.json();
+  const list = Array.isArray(json.results) ? json.results : [];
+
+  /* ---------- new‑review detection ---------- */
+  const newCount = list.length;
+  const { lastReviewCount = 0 } = await chrome.storage.local.get("lastReviewCount");
+
+  if (newCount > lastReviewCount) {
+    const diff = newCount - lastReviewCount;
+    chrome.notifications.create(NOTIFICATION_ID_NEW_REVIEWS, {
+      type: "basic",
+      iconUrl: "iconReview.png",
+      title: "New Review!",
+      message: `You have ${diff} new review(s) on the Asset Store.`
+    });
+  }
+
+  await chrome.storage.local.set({ lastReviewCount: newCount, lastReviewsData: list });
+  lastFetchedReviews = list;
+  return list;
+}
+
 function showSessionExpiredNotification() {
   chrome.notifications.create(NOTIFICATION_ID_EXPIRED, {
     type: "basic",
@@ -121,8 +189,13 @@ chrome.notifications.onClicked.addListener((notificationId) => {
   if (
     notificationId === NOTIFICATION_ID_EXPIRED ||
     notificationId === NOTIFICATION_ID_NEW_SALES
+    || id === NOTIFICATION_ID_NEW_REVIEWS
   ) {
-    chrome.tabs.create({ url: "https://publisher.unity.com/sales" });
+        const url =
+      id === NOTIFICATION_ID_NEW_REVIEWS
+        ? "https://publisher.unity.com/reviews"
+        : "https://publisher.unity.com/sales";
+    chrome.tabs.create({ url });
     chrome.notifications.clear(notificationId);
   }
 });

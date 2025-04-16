@@ -27,13 +27,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   else if (message.type === "GET_CACHED_SALES") {
-    // Return whatever we have, or null if we haven't fetched anything yet
-    if (lastFetchedData) {
-      sendResponse({ success: true, data: lastFetchedData });
-    } else {
-      sendResponse({ success: false, error: "No data cached yet." });
-    }
-    // No async needed here, so no return needed
+    chrome.storage.local.get("lastSalesData", (res) => {
+      if (Array.isArray(res.lastSalesData)) {
+        sendResponse({ success: true, data: res.lastSalesData });
+      } else {
+        sendResponse({ success: false, error: "No data cached yet." });
+      }
+    });
+    return true;          // async response
   }
 });
 
@@ -72,6 +73,8 @@ async function checkForNewSales() {
     if (!Array.isArray(data)) {
       console.warn("Unexpected data format:", data);
       lastFetchedData = data; // We'll still store it
+      // NEW  ➜  persist it
+      chrome.storage.local.set({ lastSalesData: data });
       return data;
     }
 
@@ -87,7 +90,8 @@ async function checkForNewSales() {
     // Update stored count & stored data
     await chrome.storage.local.set({ lastSalesCount: newCount });
     lastFetchedData = data;
-
+    // NEW  ➜  persist it
+    chrome.storage.local.set({ lastSalesData: data });
     return data;
   } catch (err) {
     console.error("checkForNewSales error:", err);

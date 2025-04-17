@@ -214,13 +214,27 @@ async function checkForNewReviews() {
   const prevCount = (await chrome.storage.local.get("lastReviewCount")).lastReviewCount || 0;
   const diff = reviewsList.length - prevCount;
   if (diff > 0) {
-    chrome.notifications.create(NOTIF_NEW_REVIEWS, {
-      type: "basic",
-      title: "New Review!",
-      iconUrl: ICON_REVIEW,
-      message: `${diff} new review(s) on the Asset Store.`
-    });
-    await pushUnread(diff);
+    // Grab just the newly added reviews
+    const newReviews = reviewsList.slice(prevCount);
+  
+    for (const rv of newReviews) {
+      const stars = "★".repeat(Number(rv.rating) || 0) || "–";
+      const title = `${stars}  ${rv.subject}`;
+      // Chrome notifications message can be up to ~4–6 lines;
+      // truncate long bodies if you like:
+      const body  = rv.body.length > 200
+        ? rv.body.slice(0,200) + "…"
+        : rv.body;
+  
+      chrome.notifications.create(`${NOTIF_NEW_REVIEWS}-${rv.id}`, {
+        type:    "basic",
+        iconUrl: ICON_REVIEW,
+        title,
+        message: body
+      });
+  
+      await pushUnread(1);
+    }
   }
   await chrome.storage.local.set({ lastReviewCount: reviewsList.length });
   return reviewsList;

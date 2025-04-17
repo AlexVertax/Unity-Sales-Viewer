@@ -1,133 +1,112 @@
-/* ────────────────────────────────────────────────────────────
- *  Unity Sales Viewer – Chrome Extension
- *  © 2025  Limitless Unity Development
- *  Licensed under the MIT License
- *  https://opensource.org/licenses/MIT
- *
- *  This extension is in no way affiliated with, authorized,
- *  maintained, sponsored or endorsed by Unity Technologies
- *  or any of its affiliates or subsidiaries.
- ──────────────────────────────────────────────────────────── */
 document.addEventListener("DOMContentLoaded", () => {
+  const refreshBtn   = document.getElementById("refreshBtn");
+  const totalGross   = document.getElementById("totalGross");
+  const totalRevenue = document.getElementById("totalRevenue");
+  const salesTBody   = document.querySelector("#salesTable tbody");
+  const reviewsTBody = document.querySelector("#reviewsTable tbody");
+  const tabs         = [...document.querySelectorAll(".tab")];
+  const panels       = [...document.querySelectorAll("[data-panel]")];
 
-  /* ---------- ELEMENTS ---------- */
-  const totalGrossEl   = document.getElementById("totalGross");
-  const totalRevenueEl = document.getElementById("totalRevenue");
-  const salesTBody     = document.querySelector("#salesTable tbody");
-  const reviewsTBody   = document.querySelector("#reviewsTable tbody");
-  const tabs   = [...document.querySelectorAll(".tab")];
-  const panels = [...document.querySelectorAll("[data-panel]")];
-
-  /* ---------- TAB SWITCHING ---------- */
+  // Tab switching
   function switchTo(tabName) {
-    tabs.forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tabName));
-    panels.forEach(panel => {
-      panel.style.display = (panel.dataset.panel === tabName) ? "" : "none";
-    });
+    tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === tabName));
+    panels.forEach(p => p.style.display = p.dataset.panel === tabName ? "" : "none");
   }
-  tabs.forEach(btn => {
-    btn.onclick = () => switchTo(btn.dataset.tab);
+  tabs.forEach(t => t.addEventListener("click", () => switchTo(t.dataset.tab)));
+
+  // Load cached or fetch fresh on open
+  chrome.runtime.sendMessage({ type:"GET_CACHED_SALES" }, r => {
+    r.success ? renderSales(r.data) : fetchSales();
+  });
+  chrome.runtime.sendMessage({ type:"GET_CACHED_REVIEWS" }, r => {
+    r.success ? renderReviews(r.data) : fetchReviews();
   });
 
-  /* ---------- INITIAL DATA & AUTO-REFRESH ---------- */
-  chrome.runtime.sendMessage({ type: "GET_CACHED_SALES" }, res => {
-    if (res?.success) renderSales(res.data);
-    fetchSales();  // always fetch latest sales data
-  });
-  chrome.runtime.sendMessage({ type: "GET_CACHED_REVIEWS" }, res => {
-    if (res?.success) renderReviews(res.data);
-    fetchReviews(); // always fetch latest reviews data
+  // Refresh button
+  refreshBtn.addEventListener("click", async () => {
+    await ensureCsrf();  // renew session if needed
+    const active = document.querySelector(".tab.active").dataset.tab;
+    active === "reviews" ? fetchReviews() : fetchSales();
   });
 
-  /* ---------- AUTO-CLEAR BADGE ---------- */
-  chrome.runtime.sendMessage({ type: "CLEAR_BADGE" });
+  // Clear badge when popup opens
+  chrome.runtime.sendMessage({ type:"CLEAR_BADGE" });
 
-  /* ---------- FETCH FUNCTIONS ---------- */
   function fetchSales() {
-    blankSales();  // show loading state
-    chrome.runtime.sendMessage({ type: "FETCH_SALES" }, res => {
-      if (res?.success) {
-        renderSales(res.data);
-      } else {
-        alert("Sales fetch failed – session expired?");
-      }
+    clearSales();
+    chrome.runtime.sendMessage({ type:"FETCH_SALES" }, res => {
+      res.success ? renderSales(res.data) : alert("Sales fetch failed");
     });
   }
+
   function fetchReviews() {
-    blankReviews();
-    chrome.runtime.sendMessage({ type: "FETCH_REVIEWS" }, res => {
-      if (res?.success) {
-        renderReviews(res.data);
-      } else {
-        alert("Review fetch failed – session expired?");
-      }
+    clearReviews();
+    chrome.runtime.sendMessage({ type:"FETCH_REVIEWS" }, res => {
+      res.success ? renderReviews(res.data) : alert("Reviews fetch failed");
     });
   }
 
-  /* ---------- RENDER SALES TABLE ---------- */
+  // Render sales table
   function renderSales(list) {
-    blankSales();
-    // Sort sales by most recent "Last" date (descending)
-    const sorted = [...list].sort((a, b) => new Date(b.last) - new Date(a.last));
-    let grossSum = 0, revenueSum = 0;
-    for (const item of sorted) {
-      const tr = document.createElement("tr");
-      addCell(tr, item.name);
-      addCell(tr, item.price);
-      addCell(tr, money(item.gross));
-      addCell(tr, money(item.revenue));
-      addCell(tr, item.sales);
-      addCell(tr, item.refunds);
-      addCell(tr, item.chargebacks);
-      addCell(tr, isoToPretty(item.first));
-      addCell(tr, isoToPretty(item.last));
-      salesTBody.appendChild(tr);
-      grossSum   += toNumber(item.gross);
-      revenueSum += toNumber(item.revenue);
-    }
-    totalGrossEl.textContent   = grossSum.toFixed(2);
-    totalRevenueEl.textContent = revenueSum.toFixed(2);
+    clearSales();
+    list.sort((a,b) => new Date(b.last) - new Date(a.last));
+    let grossSum = 0, revSum = 0;
+    list.forEach(r => {
+      const tr = salesTBody.insertRow();
+      [ r.name,
+        r.price,
+        money(r.gross),
+        money(r.revenue),
+        r.sales,
+        r.refunds,
+        r.chargebacks,
+        pretty(r.first),
+        pretty(r.last)
+      ].forEach(txt => {
+        const td = tr.insertCell();
+        td.textContent = txt;
+      });
+      grossSum += num(r.gross);
+      revSum   += num(r.revenue);
+    });
+    totalGross.textContent   = grossSum.toFixed(2);
+    totalRevenue.textContent = revSum.toFixed(2);
   }
 
-  /* ---------- RENDER REVIEWS TABLE ---------- */
+  // Render reviews table with ★, subject, full text
   function renderReviews(list) {
-    blankReviews();
-    for (const rv of list) {
-      const tr = document.createElement("tr");
-      addCell(tr, rv.createdTime ? rv.createdTime.slice(0, 10) : "");  // Date (YYYY-MM-DD)
-      addCell(tr, rv.packageName);
-      addCell(tr, rv.rating);
-      addCell(tr, rv.subject);
-      addCell(tr, truncate(rv.body, 80));
-      reviewsTBody.appendChild(tr);
-    }
+    clearReviews();
+    list.forEach(r => {
+      const tr = reviewsTBody.insertRow();
+      const stars = "★".repeat(Number(r.rating)) || "–";
+      [ r.createdTime?.slice(0,10),
+        r.packageName,
+        stars,
+        r.subject,
+        r.body
+      ].forEach(txt => {
+        const td = tr.insertCell();
+        td.textContent = txt;
+      });
+    });
   }
 
-  /* ---------- HELPERS & FORMATTERS ---------- */
-  function addCell(row, textContent) {
-    const td = document.createElement("td");
-    td.textContent = textContent ?? "";
-    row.appendChild(td);
-  }
-  const toNumber = str => parseFloat(String(str || "").replace(/[^0-9.\-]/g, "")) || 0;
-  const money    = str => `${str || "0.00"} $`;
-  const isoToPretty = isoStr => {
-    if (!isoStr) return "";
-    const d = new Date(isoStr);
-    if (isNaN(d)) return isoStr;
-    // Format as "YYYY-MM-DD | HH:MM:SS"
-    return d.toISOString().slice(0, 10) + " | " + d.toISOString().slice(11, 19);
-  };
-  const truncate = (text, maxLen) => {
-    if (!text) return "";
-    return text.length > maxLen ? text.slice(0, maxLen) + "…" : text;
-  };
+  // Helpers
+  const num    = s => parseFloat((s||"").replace(/[^\d.]/g,""))||0;
+  const money  = s => `${s||"0.00"} $`;
+  const pretty = s => s ? `${s.slice(0,10)} | ${s.slice(11,19)}` : "";
+  function clearSales()   { salesTBody.innerHTML = ""; totalGross.textContent = totalRevenue.textContent = "–"; }
+  function clearReviews() { reviewsTBody.innerHTML = ""; }
 
-  function blankSales() {
-    salesTBody.innerHTML = "";
-    totalGrossEl.textContent = totalRevenueEl.textContent = "–";
-  }
-  function blankReviews() {
-    reviewsTBody.innerHTML = "";
+  // Ensure CSRF: silently open/close a tab to refresh cookie if missing
+  function ensureCsrf() {
+    return new Promise(res => {
+      chrome.cookies.get({ url:"https://publisher.unity.com", name:"_csrf" }, c => {
+        if (c) return res();
+        chrome.tabs.create({ url:"https://publisher.unity.com/sales", active:false }, tab => {
+          setTimeout(() => chrome.tabs.remove(tab.id, res), 4000);
+        });
+      });
+    });
   }
 });

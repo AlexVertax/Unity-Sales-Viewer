@@ -1,198 +1,103 @@
-<!-- ────────────────────────────────────────────────────────────
-     Unity Sales Viewer – Chrome Extension
-     © 2025  Limitless Unity Development
-     Licensed under the MIT License:
-     https://opensource.org/licenses/MIT
-
-     This extension is in no way affiliated with, authorized,
-     maintained, sponsored or endorsed by Unity Technologies
-     or any of its affiliates or subsidiaries.
- ──────────────────────────────────────────────────────────── -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Unity&nbsp;Publisher&nbsp;Dashboard</title>
+<meta charset="UTF-8" />
+<title>Unity Publisher Dashboard</title>
 
-  <!-- Google Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+<!-- Google Font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-  <style>
-    :root {
-      --accent: #0077ff;
-      --border: #d0d4d9;
-      --bg-card: #fff;
-      --bg-head: #f1f3f6;
-      --bg-zebra: #fafbfc;
-      --bg-status: #f5f7fa;
-      --text: #202124;
-      --muted: #5f6368;
-    }
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-family: "Inter", Arial, sans-serif;
-      color: var(--text);
-      width: 760px;
-      box-sizing: border-box;
-    }
-    .card {
-      padding: 22px 24px 20px;
-      border-radius: 10px;
-      background: var(--bg-card);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
-    h1 {
-      margin: 0 0 14px;
-      font-size: 22px;
-      font-weight: 600;
-    }
-    /* ----- TAB BAR ----- */
-    .tabbar {
-      display: flex;
-      gap: 0;
-      margin-bottom: 14px;
-      border-bottom: 1px solid var(--border);
-    }
-    .tab {
-      all: unset;
-      cursor: pointer;
-      padding: 8px 22px 7px;
-      font-size: 14px;
-      color: #444;
-      background: #e8eaed;
-      border: 1px solid var(--border);
-      border-bottom: none;
-      border-radius: 10px 10px 0 0;
-      margin-right: 3px;
-      position: relative;
-      top: 1px;  /* lower by 1px so borders align */
-      transition: background 0.15s;
-    }
-    .tab:hover  { background: #dfe2e6; }
-    .tab.active {
-      background: var(--bg-card);
-      color: var(--text);
-      font-weight: 600;
-    }
-    /* ----- STATUS BAR ----- */
-    .status {
-      display: flex;
-      gap: 16px;
-      margin: 10px 0 12px;
-      padding: 0;
-      background: none;
-      border: none;
-    }
-    .zone {
-      flex: 1;
-      text-align: center;
-      padding: 9px 14px;
-      background: var(--bg-status);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 1.2em;
-    }
-    .status .value {
-      font-weight: 600;
-    }
-    /* ----- REFRESH BUTTON ----- */
-    #refreshBtn {
-      all: unset;
-      display: inline-block;
-      margin-bottom: 4px;
-      padding: 7px 20px;
-      background: var(--accent);
-      color: #fff;
-      border-radius: 26px;
-      font-size: 15px;
-      cursor: pointer;
-      user-select: none;
-    }
-    #refreshBtn:hover { background: #0066e0; }
-    #refreshBtn:active { background: #0057c2; }
-    /* ----- TABLE ----- */
-    .table-box {
-      max-height: 400px;
-      overflow-y: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    thead th {
-      background: var(--bg-head);
-      font-weight: 600;
-      border-bottom: 1px solid var(--border);
-      padding: 9px 10px;
-      text-align: left;
-      white-space: nowrap;
-    }
-    tbody tr:nth-child(even) {
-      background: var(--bg-zebra);
-    }
-    tbody td {
-      border-bottom: 1px solid var(--border);
-      padding: 7px 10px;
-      white-space: nowrap;
-      color: var(--muted);
-    }
-    /* ----- POPUP WINDOW STYLE (rounded corners) ----- */
-    html, body {
-      border-radius: 14px;
-      overflow: hidden;
-    }
-    body {
-      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-    }
-  </style>
+<style>
+  :root{
+    --accent:#0077ff;  --border:#d0d4d9; --bg-card:#fff;
+    --bg-head:#f1f3f6; --bg-zebra:#fafbfc; --bg-status:#f5f7fa;
+    --text:#202124;    --muted:#5f6368;
+  }
+
+  html,body{margin:0;padding:0;font-family:"Inter",Arial,sans-serif;color:var(--text);width:760px;box-sizing:border-box}
+  .card{padding:22px 24px 20px;border-radius:10px;background:var(--bg-card);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+
+  h1{margin:0 0 14px;font-size:22px;font-weight:600}
+
+  /* ----- TAB BAR ----- */
+  .tabbar{display:flex; gap:0; margin-bottom:14px; border-bottom:1px solid var(--border);}
+  .tab{all:unset; cursor:pointer; padding:8px 22px 7px; font-size:14px; color:#444;
+       background:#e8eaed; border:1px solid var(--border); border-bottom:none;
+       border-radius:10px 10px 0 0; margin-right:3px; position:relative; top:1px;
+       transition:background .15s;}
+  .tab:hover  { background:#dfe2e6; }
+  .tab.active{
+    background:var(--bg-card);
+    color:var(--text);
+    font-weight:600;
+  }
+
+  /* ----- REFRESH BUTTON ----- */
+  #refreshBtn{all:unset;display:inline-block;margin-bottom:4px;padding:7px 20px;
+              background:var(--accent);color:#fff;border-radius:26px;font-size:15px;
+              cursor:pointer;user-select:none}
+  #refreshBtn:hover{background:#0066e0}
+  #refreshBtn:active{background:#0057c2}
+
+  /* ----- STATUS BOXES ----- */
+  .status{display:flex; gap:16px; margin:10px 0 12px;}
+  .zone{flex:1; text-align:center; padding:9px 14px; background:var(--bg-status);
+        border:1px solid var(--border); border-radius:8px; font-size:1.2em;}
+  .status .value{font-weight:600}
+
+  /* ----- TABLE BOX ----- */
+  .table-box{max-height:400px; overflow-y:auto;}
+  table{width:100%; border-collapse:collapse; font-size:14px;}
+  thead th{background:var(--bg-head); font-weight:600; border-bottom:1px solid var(--border);
+           padding:9px 10px; text-align:left; white-space:nowrap;}
+  tbody tr:nth-child(even){background:var(--bg-zebra);}
+  tbody td{border-bottom:1px solid var(--border); padding:7px 10px; white-space:nowrap; color:var(--muted);}
+
+  /* Rounded popup window */
+  html, body{border-radius:14px; overflow:hidden;}
+  body{box-shadow:0 4px 14px rgba(0,0,0,.25);}
+</style>
 </head>
 
 <body>
   <div class="card">
-    <h1>Unity&nbsp;Publisher&nbsp;Dashboard</h1>
+
+    <h1>Unity Publisher Dashboard</h1>
 
     <!-- TAB BAR -->
     <div class="tabbar">
       <button class="tab active" data-tab="sales">Sales</button>
-      <button class="tab" data-tab="reviews">Reviews</button>
+      <button class="tab"          data-tab="reviews">Reviews</button>
     </div>
 
-    <!-- SALES TOTALS -->
+    <button id="refreshBtn">Refresh</button>
+
+    <!-- SALES PANEL -->
     <div class="status" data-panel="sales">
       <div class="zone">
-        Gross:&nbsp;<span id="totalGross" class="value">–</span>&nbsp;$
+        Gross :&nbsp;<span id="totalGross" class="value">–</span> $
       </div>
       <div class="zone">
-        Revenue:&nbsp;<span id="totalRevenue" class="value">–</span>&nbsp;$
+        Revenue :&nbsp;<span id="totalRevenue" class="value">–</span> $
       </div>
     </div>
-
-    <!-- SALES TABLE -->
     <div class="table-box" data-panel="sales">
       <table id="salesTable">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Price</th>
-            <th>Gross</th>
-            <th>Revenue</th>
-            <th>Sales</th>
-            <th>Refunds</th>
-            <th>Chargebacks</th>
-            <th>First</th>
-            <th>Last</th>
+            <th>Name</th><th>Price</th><th>Gross</th><th>Revenue</th>
+            <th>Sales</th><th>Refunds</th><th>Chargebacks</th>
+            <th>First</th><th>Last</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
 
-    <!-- REVIEWS TABLE -->
-    <div class="table-box" data-panel="reviews" style="display: none;">
+    <!-- REVIEWS PANEL -->
+    <div class="table-box" data-panel="reviews" style="display:none;">
       <table id="reviewsTable">
         <thead>
           <tr>
@@ -200,12 +105,13 @@
             <th>Asset</th>
             <th>Rating</th>
             <th>Subject</th>
-            <th>Body&nbsp;(preview)</th>
+            <th>Review Text</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
+
   </div>
 
   <script src="popup.js"></script>

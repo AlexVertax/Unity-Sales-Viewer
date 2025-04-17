@@ -1,6 +1,6 @@
 {
   "name": "Unity Sales Viewer",
-  "version": "1.0",
+  "version": "1.2",
   "manifest_version": 3,
   "description": "Checks Unity Publisher sales, notifies on new sales, and displays them in a nice table.",
   "permissions": [

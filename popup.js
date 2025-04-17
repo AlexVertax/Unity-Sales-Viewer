@@ -29,7 +29,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const active = document.querySelector(".tab.active")?.dataset.tab || "sales";
     active === "sales" ? fetchSales() : fetchReviews();
   };
-
+/* prettify "YYYY‑MM‑DDTHH:mm:ssZ" → "YYYY‑MM‑DD | HH:mm:ss" */
+function isoToPretty(str){
+  if(!str) return "";
+  const d = new Date(str);
+  if(isNaN(d)) return str;                       // fallback
+  return `${d.toISOString().slice(0,10)} | ${d.toISOString().slice(11,19)}`;
+}
   /* ---------- FETCH FUNCTIONS ---------- */
   function fetchSales(){
     blankSales();   // quick visual reset
@@ -45,10 +51,13 @@ document.addEventListener("DOMContentLoaded", () => {
       else alert("Review fetch failed (see console).");
     });
   }
+  chrome.runtime.sendMessage({ type: "CLEAR_BADGE" });
 
   /* ---------- RENDER SALES ---------- */
   function renderSales(list){
     blankSales();
+    /* sort by `last` date descending (most‑recent first) */
+    list = [...list].sort((a, b) => new Date(b.last) - new Date(a.last));
     let grossSum=0, revSum=0;
     list.forEach(it=>{
       const tr = document.createElement("tr");
@@ -59,8 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
       addCell(tr,it.sales);
       addCell(tr,it.refunds);
       addCell(tr,it.chargebacks);
-      addCell(tr,it.first);
-      addCell(tr,it.last);
+      addCell(tr, isoToPretty(it.first));
+      addCell(tr, isoToPretty(it.last));
       salesTBody.appendChild(tr);
       grossSum += toNum(it.gross);
       revSum   += toNum(it.revenue);

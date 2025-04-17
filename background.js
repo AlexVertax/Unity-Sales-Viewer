@@ -21,6 +21,16 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     checkForNewReviews();
   }
 });
+/* restore badge on browser restart */
+chrome.storage.local.get("unread", ({ unread = 0 }) => {
+  if (unread > 0) setBadge(String(unread));
+});
+/* ─── badge helpers ───────────────────────────── */
+function setBadge(text, color = "#d93025") {
+  chrome.action.setBadgeText({ text });
+  chrome.action.setBadgeBackgroundColor({ color });
+}
+function clearBadge() { chrome.action.setBadgeText({ text: "" }); }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
@@ -58,6 +68,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success:false, error:"No cached reviews yet." });
     });
     return true;
+  }
+  if (message.type === "CLEAR_BADGE") {
+    chrome.storage.local.set({ unread: 0 }, clearBadge);
+    // reply immediately; no async
+    return;
   }
 });
 
@@ -109,6 +124,10 @@ async function checkForNewSales() {
     if (typeof lastSalesCount === "number" && newCount > lastSalesCount) {
       const diff = newCount - lastSalesCount;
       showNewSalesNotification(diff);
+      const { unread = 0 } = await chrome.storage.local.get("unread");
+const newTotal = unread + diff;
+await chrome.storage.local.set({ unread: newTotal });
+setBadge(String(newTotal));
     }
 
     // Update stored count & stored data
@@ -160,6 +179,10 @@ async function checkForNewReviews() {
       title: "New Review!",
       message: `You have ${diff} new review(s) on the Asset Store.`
     });
+    const { unread = 0 } = await chrome.storage.local.get("unread");
+    const newTotal = unread + diff;
+    await chrome.storage.local.set({ unread: newTotal });
+    setBadge(String(newTotal));
   }
 
   await chrome.storage.local.set({ lastReviewCount: newCount, lastReviewsData: list });

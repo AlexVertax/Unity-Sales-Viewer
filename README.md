@@ -1,5 +1,8 @@
 # 🛒 Unity Publisher Dashboard – Chrome Extension
-
+This extension is in no way affiliated with, authorized,
+ maintained, sponsored or endorsed by Unity Technologies
+    or any of its affiliates or subsidiaries.
+   
 Modern Manifest V3 helper for Unity Asset‑Store publishers:
 
 | What it does | How |

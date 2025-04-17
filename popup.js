@@ -1,108 +1,133 @@
+/* ────────────────────────────────────────────────────────────
+ *  Unity Sales Viewer – Chrome Extension
+ *  © 2025  Limitless Unity Development
+ *  Licensed under the MIT License
+ *  https://opensource.org/licenses/MIT
+ *
+ *  This extension is in no way affiliated with, authorized,
+ *  maintained, sponsored or endorsed by Unity Technologies
+ *  or any of its affiliates or subsidiaries.
+ ──────────────────────────────────────────────────────────── */
 document.addEventListener("DOMContentLoaded", () => {
 
   /* ---------- ELEMENTS ---------- */
-  const refreshBtn      = document.getElementById("refreshBtn");
-  const totalGrossEl    = document.getElementById("totalGross");
-  const totalRevenueEl  = document.getElementById("totalRevenue");
-  const salesTBody      = document.querySelector("#salesTable tbody");
-  const reviewsTBody    = document.querySelector("#reviewsTable tbody");
+  const totalGrossEl   = document.getElementById("totalGross");
+  const totalRevenueEl = document.getElementById("totalRevenue");
+  const salesTBody     = document.querySelector("#salesTable tbody");
+  const reviewsTBody   = document.querySelector("#reviewsTable tbody");
   const tabs   = [...document.querySelectorAll(".tab")];
   const panels = [...document.querySelectorAll("[data-panel]")];
 
-  /* ---------- TAB HANDLING ---------- */
-  function switchTo(name){
-    tabs.forEach(b => b.classList.toggle("active", b.dataset.tab===name));
-    panels.forEach(p => p.style.display = (p.dataset.panel===name) ? "" : "none");
-  }
-  tabs.forEach(btn => btn.onclick = () => switchTo(btn.dataset.tab));
-
-  /* ---------- INITIAL DATA (cached) ---------- */
-  chrome.runtime.sendMessage({ type:"GET_CACHED_SALES" }, r=>{
-    if(r?.success) renderSales(r.data);
-  });
-  chrome.runtime.sendMessage({ type:"GET_CACHED_REVIEWS" }, r=>{
-    if(r?.success) renderReviews(r.data);
-  });
-
-  /* ---------- REFRESH ---------- */
-  refreshBtn.onclick = () => {
-    const active = document.querySelector(".tab.active")?.dataset.tab || "sales";
-    active === "sales" ? fetchSales() : fetchReviews();
-  };
-/* prettify "YYYY‑MM‑DDTHH:mm:ssZ" → "YYYY‑MM‑DD | HH:mm:ss" */
-function isoToPretty(str){
-  if(!str) return "";
-  const d = new Date(str);
-  if(isNaN(d)) return str;                       // fallback
-  return `${d.toISOString().slice(0,10)} | ${d.toISOString().slice(11,19)}`;
-}
-/* "50.00" → "50.00 $" */
-function money(str){ return (str ?? "").toString() + " $"; }
-  /* ---------- FETCH FUNCTIONS ---------- */
-  function fetchSales(){
-    blankSales();   // quick visual reset
-    chrome.runtime.sendMessage({ type:"FETCH_SALES" }, res=>{
-      if(res?.success) renderSales(res.data);
-      else alert("Sales fetch failed (see console).");
+  /* ---------- TAB SWITCHING ---------- */
+  function switchTo(tabName) {
+    tabs.forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tabName));
+    panels.forEach(panel => {
+      panel.style.display = (panel.dataset.panel === tabName) ? "" : "none";
     });
   }
-  function fetchReviews(){
-    blankReviews();
-    chrome.runtime.sendMessage({ type:"FETCH_REVIEWS" }, res=>{
-      if(res?.success) renderReviews(res.data);
-      else alert("Review fetch failed (see console).");
-    });
-  }
+  tabs.forEach(btn => {
+    btn.onclick = () => switchTo(btn.dataset.tab);
+  });
+
+  /* ---------- INITIAL DATA & AUTO-REFRESH ---------- */
+  chrome.runtime.sendMessage({ type: "GET_CACHED_SALES" }, res => {
+    if (res?.success) renderSales(res.data);
+    fetchSales();  // always fetch latest sales data
+  });
+  chrome.runtime.sendMessage({ type: "GET_CACHED_REVIEWS" }, res => {
+    if (res?.success) renderReviews(res.data);
+    fetchReviews(); // always fetch latest reviews data
+  });
+
+  /* ---------- AUTO-CLEAR BADGE ---------- */
   chrome.runtime.sendMessage({ type: "CLEAR_BADGE" });
 
-  /* ---------- RENDER SALES ---------- */
-  function renderSales(list){
-    blankSales();
-    /* sort by `last` date descending (most‑recent first) */
-    list = [...list].sort((a, b) => new Date(b.last) - new Date(a.last));
-    let grossSum=0, revSum=0;
-    list.forEach(it=>{
-      const tr = document.createElement("tr");
-      addCell(tr,it.name);
-      addCell(tr,it.price);
-      addCell(tr, money(it.gross));
-      addCell(tr, money(it.revenue));
-      addCell(tr,it.sales);
-      addCell(tr,it.refunds);
-      addCell(tr,it.chargebacks);
-      addCell(tr, isoToPretty(it.first));
-      addCell(tr, isoToPretty(it.last));
-      salesTBody.appendChild(tr);
-      grossSum += toNum(it.gross);
-      revSum   += toNum(it.revenue);
+  /* ---------- FETCH FUNCTIONS ---------- */
+  function fetchSales() {
+    blankSales();  // show loading state
+    chrome.runtime.sendMessage({ type: "FETCH_SALES" }, res => {
+      if (res?.success) {
+        renderSales(res.data);
+      } else {
+        alert("Sales fetch failed – session expired?");
+      }
     });
-     totalGrossEl.textContent   = grossSum.toFixed(2);
-     totalRevenueEl.textContent = revSum.toFixed(2);
+  }
+  function fetchReviews() {
+    blankReviews();
+    chrome.runtime.sendMessage({ type: "FETCH_REVIEWS" }, res => {
+      if (res?.success) {
+        renderReviews(res.data);
+      } else {
+        alert("Review fetch failed – session expired?");
+      }
+    });
   }
 
-  /* ---------- RENDER REVIEWS ---------- */
-  function renderReviews(list){
-    blankReviews();
-    list.forEach(rv=>{
+  /* ---------- RENDER SALES TABLE ---------- */
+  function renderSales(list) {
+    blankSales();
+    // Sort sales by most recent "Last" date (descending)
+    const sorted = [...list].sort((a, b) => new Date(b.last) - new Date(a.last));
+    let grossSum = 0, revenueSum = 0;
+    for (const item of sorted) {
       const tr = document.createElement("tr");
-      addCell(tr, rv.createdTime?.slice(0,10));
+      addCell(tr, item.name);
+      addCell(tr, item.price);
+      addCell(tr, money(item.gross));
+      addCell(tr, money(item.revenue));
+      addCell(tr, item.sales);
+      addCell(tr, item.refunds);
+      addCell(tr, item.chargebacks);
+      addCell(tr, isoToPretty(item.first));
+      addCell(tr, isoToPretty(item.last));
+      salesTBody.appendChild(tr);
+      grossSum   += toNumber(item.gross);
+      revenueSum += toNumber(item.revenue);
+    }
+    totalGrossEl.textContent   = grossSum.toFixed(2);
+    totalRevenueEl.textContent = revenueSum.toFixed(2);
+  }
+
+  /* ---------- RENDER REVIEWS TABLE ---------- */
+  function renderReviews(list) {
+    blankReviews();
+    for (const rv of list) {
+      const tr = document.createElement("tr");
+      addCell(tr, rv.createdTime ? rv.createdTime.slice(0, 10) : "");  // Date (YYYY-MM-DD)
       addCell(tr, rv.packageName);
       addCell(tr, rv.rating);
       addCell(tr, rv.subject);
-      addCell(tr, shorten(rv.body,80));
+      addCell(tr, truncate(rv.body, 80));
       reviewsTBody.appendChild(tr);
-    });
+    }
   }
 
-  /* ---------- HELPERS ---------- */
-  function addCell(row,text){
-    const td=document.createElement("td");
-    td.textContent = text ?? "";
+  /* ---------- HELPERS & FORMATTERS ---------- */
+  function addCell(row, textContent) {
+    const td = document.createElement("td");
+    td.textContent = textContent ?? "";
     row.appendChild(td);
   }
-  const toNum = s => parseFloat((s??"").replace(/[^0-9.\-]/g,""))||0;
-  const shorten = (t,max)=> (t||"").length>max ? (t.slice(0,max)+"…") : (t||"");
-  function blankSales(){ salesTBody.innerHTML=""; totalGrossEl.textContent=totalRevenueEl.textContent="–"; }
-  function blankReviews(){ reviewsTBody.innerHTML=""; }
+  const toNumber = str => parseFloat(String(str || "").replace(/[^0-9.\-]/g, "")) || 0;
+  const money    = str => `${str || "0.00"} $`;
+  const isoToPretty = isoStr => {
+    if (!isoStr) return "";
+    const d = new Date(isoStr);
+    if (isNaN(d)) return isoStr;
+    // Format as "YYYY-MM-DD | HH:MM:SS"
+    return d.toISOString().slice(0, 10) + " | " + d.toISOString().slice(11, 19);
+  };
+  const truncate = (text, maxLen) => {
+    if (!text) return "";
+    return text.length > maxLen ? text.slice(0, maxLen) + "…" : text;
+  };
 
+  function blankSales() {
+    salesTBody.innerHTML = "";
+    totalGrossEl.textContent = totalRevenueEl.textContent = "–";
+  }
+  function blankReviews() {
+    reviewsTBody.innerHTML = "";
+  }
 });

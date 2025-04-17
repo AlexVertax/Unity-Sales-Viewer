@@ -1,232 +1,277 @@
+/* ────────────────────────────────────────────────────────────
+ *  Unity Sales Viewer – Chrome Extension
+ *  © 2025  Limitless Unity Development
+ *  Licensed under the MIT License
+ *  https://opensource.org/licenses/MIT
+ *
+ *  This extension is in no way affiliated with, authorized,
+ *  maintained, sponsored or endorsed by Unity Technologies
+ *  or any of its affiliates or subsidiaries.
+ ──────────────────────────────────────────────────────────── */
+/* ---------- CONSTANTS ---------- */
 const CHECK_INTERVAL_MINUTES = 10;
-const NOTIFICATION_ID_EXPIRED = "unitySales-sessionExpired";
-const NOTIFICATION_ID_NEW_SALES = "unitySales-newSales";
-const NOTIFICATION_ID_NEW_REVIEWS = "unitySales-newReviews";
 
-let lastFetchedData = null;  // We'll keep the most recent sales data here
-let lastFetchedReviews = null;  // reviews array
+const NOTIF_EXPIRED     = "unitySales-sessionExpired";
+const NOTIF_NEW_SALES   = "unitySales-newSales";
+const NOTIF_NEW_REVIEWS = "unitySales-newReviews";
 
+const ICON_SALE    = chrome.runtime.getURL("icons/iconSale.png");
+const ICON_REVIEW  = chrome.runtime.getURL("icons/iconReview.png");
+const ICON_EXPIRED = chrome.runtime.getURL("icons/iconSessionExpired.png");
+
+/* ---------- ON INSTALL ---------- */
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.alarms.clear("checkSales", () => {
-    chrome.alarms.create("checkSales", {
-      periodInMinutes: CHECK_INTERVAL_MINUTES
-    });
-  });
+  chrome.alarms.create("checkSales", { periodInMinutes: CHECK_INTERVAL_MINUTES });
 });
 
-chrome.alarms.onAlarm.addListener((alarm) => {
+/* ---------- ALARM HANDLER ---------- */
+chrome.alarms.onAlarm.addListener(alarm => {
   if (alarm.name === "checkSales") {
-    
     checkForNewSales();
     checkForNewReviews();
   }
 });
-/* restore badge on browser restart */
-chrome.storage.local.get("unread", ({ unread = 0 }) => {
-  if (unread > 0) setBadge(String(unread));
-});
-/* ─── badge helpers ───────────────────────────── */
+
+/* ---------- BADGE HELPERS ---------- */
 function setBadge(text, color = "#d93025") {
   chrome.action.setBadgeText({ text });
   chrome.action.setBadgeBackgroundColor({ color });
 }
-function clearBadge() { chrome.action.setBadgeText({ text: "" }); }
+function clearBadge() {
+  chrome.action.setBadgeText({ text: "" });
+}
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+async function pushUnread(delta = 1) {
+  const { unread = 0 } = await chrome.storage.local.get("unread");
+  const total = unread + delta;
+  await chrome.storage.local.set({ unread: total });
+  setBadge(String(total));
+}
 
-  /* ---------- SALES ---------- */
-  if (message.type === "FETCH_SALES") {
+/* Restore badge text after browser restart */
+chrome.storage.local.get("unread", ({ unread = 0 }) => {
+  if (unread) setBadge(String(unread));
+});
+
+/* ---------- POPUP ↔ BACKGROUND MESSAGE HANDLER ---------- */
+chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
+  /* Live fetch requests from popup (trigger immediate fetch) */
+  if (msg.type === "FETCH_SALES") {
     checkForNewSales()
-      .then(d => sendResponse({ success:true, data:d }))
-      .catch(e => sendResponse({ success:false, error:e.message }));
-    return true;               // async
+      .then(data => reply({ success: true, data }))
+      .catch(err => reply({ success: false, error: err.message }));
+    return true; // keep message channel open for async response
   }
-
-  if (message.type === "GET_CACHED_SALES") {
-    chrome.storage.local.get("lastSalesData", r => {
-      if (Array.isArray(r.lastSalesData))
-        sendResponse({ success:true, data:r.lastSalesData });
-      else
-        sendResponse({ success:false, error:"No cached sales yet." });
-    });
-    return true;
-  }
-
-  /* ---------- REVIEWS ---------- */
-  if (message.type === "FETCH_REVIEWS") {
+  if (msg.type === "FETCH_REVIEWS") {
     checkForNewReviews()
-      .then(d => sendResponse({ success:true, data:d }))
-      .catch(e => sendResponse({ success:false, error:e.message }));
+      .then(data => reply({ success: true, data }))
+      .catch(err => reply({ success: false, error: err.message }));
     return true;
   }
 
-  if (message.type === "GET_CACHED_REVIEWS") {
-    chrome.storage.local.get("lastReviewsData", r => {
-      if (Array.isArray(r.lastReviewsData))
-        sendResponse({ success:true, data:r.lastReviewsData });
-      else
-        sendResponse({ success:false, error:"No cached reviews yet." });
+  /* Cached data requests from popup (return last stored data) */
+  if (msg.type === "GET_CACHED_SALES") {
+    chrome.storage.local.get("lastSalesData", data => {
+      reply({ success: !!data.lastSalesData, data: data.lastSalesData || [] });
     });
     return true;
   }
-  if (message.type === "CLEAR_BADGE") {
+  if (msg.type === "GET_CACHED_REVIEWS") {
+    chrome.storage.local.get("lastReviewsData", data => {
+      reply({ success: !!data.lastReviewsData, data: data.lastReviewsData || [] });
+    });
+    return true;
+  }
+
+  /* Clear badge request from popup */
+  if (msg.type === "CLEAR_BADGE") {
     chrome.storage.local.set({ unread: 0 }, clearBadge);
-    // reply immediately; no async
+    reply({ ok: true });
     return;
   }
 });
 
-
+/* ---------- SALES CHECK (polling and manual) ---------- */
 async function checkForNewSales() {
-  try {
-    const csrfToken = await getCsrfCookie();
-    if (!csrfToken) {
-      showSessionExpiredNotification();
-      throw new Error("No _csrf cookie found. Possibly logged out or session expired.");
-    }
-
-    const now       = new Date();                  // local time 
-    const yyyy      = now.getFullYear();
-    const mm        = String(now.getMonth() + 1).padStart(2, "0");
-    const firstDay  = `${yyyy}-${mm}-01`;          
-
-    const url = `https://publisher.unity.com/publisher-v2-api/monthly-sales?date=${firstDay}`;
-    const response = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        "X-CSRF-Token": csrfToken,
-        "Content-Type": "application/json"
-      }
-    });
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        showSessionExpiredNotification();
-        throw new Error(`Session expired: HTTP ${response.status}`);
-      }
-      throw new Error(`Fetch failed: HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    if (!Array.isArray(data)) {
-      console.warn("Unexpected data format:", data);
-      lastFetchedData = data; // We'll still store it
-      // NEW  ➜  persist it
-      chrome.storage.local.set({ lastSalesData: data });
-      return data;
-    }
-
-    // Compare counts for "new sales" detection
-    const newCount = data.length;
-    const { lastSalesCount } = await chrome.storage.local.get("lastSalesCount") || {};
-
-    if (typeof lastSalesCount === "number" && newCount > lastSalesCount) {
-      const diff = newCount - lastSalesCount;
-      showNewSalesNotification(diff);
-      const { unread = 0 } = await chrome.storage.local.get("unread");
-const newTotal = unread + diff;
-await chrome.storage.local.set({ unread: newTotal });
-setBadge(String(newTotal));
-    }
-
-    // Update stored count & stored data
-    await chrome.storage.local.set({ lastSalesCount: newCount });
-    lastFetchedData = data;
-    // NEW  ➜  persist it
-    chrome.storage.local.set({ lastSalesData: data });
-    return data;
-  } catch (err) {
-    console.error("checkForNewSales error:", err);
-    throw err;
+  const csrf = await getCsrfCookie();
+  if (!csrf) { 
+    showSessionExpiredNotification();
+    return []; // not logged in, abort fetch
   }
-}
 
-async function checkForNewReviews() {
-  const csrfToken = await getCsrfCookie();
-  if (!csrfToken) { showSessionExpiredNotification(); return []; }
-
-  const url  = "https://publisher.unity.com/publisher-v2-api/review/list";
-  const body = { page: 1, perPage: 100 };        // tweak as you like
+  const firstDay = new Date().toISOString().slice(0, 7) + "-01";
+  const url = `https://publisher.unity.com/publisher-v2-api/monthly-sales?date=${firstDay}`;
 
   const res = await fetch(url, {
+    credentials: "include",
+    headers: { "X-CSRF-Token": csrf }
+  });
+  if (!res.ok) {
+    if ([401, 403].includes(res.status)) showSessionExpiredNotification();
+    throw new Error("sales fetch " + res.status);
+  }
+
+  const salesList = await res.json();
+  await chrome.storage.local.set({ lastSalesData: salesList });
+
+  await detectSalesDelta(salesList);  // may trigger notification & badge
+  return salesList;
+}
+
+/* ---- detect per-asset differences (new sales since last check) ---- */
+async function detectSalesDelta(list) {
+  const { salesSnapshot: prevSnap = {}, lastNotifiedSaleTs = 0 } =
+    await chrome.storage.local.get(["salesSnapshot", "lastNotifiedSaleTs"]);
+  const currSnap = buildSnapshot(list);
+
+  /* Find the latest sale timestamp in current data */
+  const newestTs = list.reduce((max, item) => {
+    const t = Date.parse(item.last) || 0;
+    return t > max ? t : max;
+  }, 0);
+
+  /* If no new sale since last notification, update snapshot and abort */
+  if (newestTs <= lastNotifiedSaleTs) {
+    await chrome.storage.local.set({ salesSnapshot: currSnap });
+    return;
+  }
+
+  const events = [];
+  for (const [pkgId, now] of Object.entries(currSnap)) {
+    const before = prevSnap[pkgId] || { sales: 0 };
+    const diff = (now.sales || 0) - (before.sales || 0);
+    if (diff > 0) {
+      events.push({ name: now.name, qty: diff, price: now.price });
+    }
+  }
+
+  if (events.length) {
+    sendSalesNotification(events);
+    await pushUnread(events.length);
+    await chrome.storage.local.set({ lastNotifiedSaleTs: newestTs });
+  }
+  await chrome.storage.local.set({ salesSnapshot: currSnap });
+}
+
+/* ---- build a snapshot object from sales list ---- */
+function buildSnapshot(rows) {
+  const snapshot = {};
+  rows.forEach(r => {
+    snapshot[r.package_id] = {
+      name:  r.name,
+      price: r.price,
+      sales: Number(r.sales) || 0
+    };
+  });
+  return snapshot;
+}
+
+/* ---- create notification message for new sales ---- */
+function sendSalesNotification(events) {
+  const first = events[0];
+  const message = (events.length === 1)
+    ? `${first.name} ×${first.qty} @ ${first.price} $`
+    : `${events.reduce((sum, e) => sum + e.qty, 0)} new sales • ${events.length} assets`;
+
+  chrome.notifications.create(NOTIF_NEW_SALES, {
+    type: "basic",
+    title: "New Unity Sale!",
+    iconUrl: ICON_SALE,
+    message: message
+  }, () => {
+    if (chrome.runtime.lastError) {
+      console.error("NOTIF_NEW_SALES:", chrome.runtime.lastError.message);
+    }
+  });
+}
+
+/* ---------- REVIEWS CHECK (polling and manual) ---------- */
+async function checkForNewReviews() {
+  const csrf = await getCsrfCookie();
+  if (!csrf) {
+    showSessionExpiredNotification();
+    return [];
+  }
+
+  const res = await fetch("https://publisher.unity.com/publisher-v2-api/review/list", {
     method: "POST",
     credentials: "include",
     headers: {
-      "X-CSRF-Token": csrfToken,
+      "X-CSRF-Token": csrf,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify({ page: 1, perPage: 100 })
   });
-
   if (!res.ok) {
-    if (res.status === 401 || res.status === 403) showSessionExpiredNotification();
-    throw new Error(`Review fetch failed ${res.status}`);
+    if ([401, 403].includes(res.status)) showSessionExpiredNotification();
+    throw new Error("review fetch " + res.status);
   }
 
-  const json = await res.json();
-  const list = Array.isArray(json.results) ? json.results : [];
+  const data = await res.json();
+  const reviewsList = Array.isArray(data.results) ? data.results : [];
+  await chrome.storage.local.set({ lastReviewsData: reviewsList });
 
-  /* ---------- new‑review detection ---------- */
-  const newCount = list.length;
-  const { lastReviewCount = 0 } = await chrome.storage.local.get("lastReviewCount");
-
-  if (newCount > lastReviewCount) {
-    const diff = newCount - lastReviewCount;
-    chrome.notifications.create(NOTIFICATION_ID_NEW_REVIEWS, {
+  const prevCount = (await chrome.storage.local.get("lastReviewCount")).lastReviewCount || 0;
+  const diff = reviewsList.length - prevCount;
+  if (diff > 0) {
+    chrome.notifications.create(NOTIF_NEW_REVIEWS, {
       type: "basic",
-      iconUrl: "iconReview.png",
       title: "New Review!",
-      message: `You have ${diff} new review(s) on the Asset Store.`
+      iconUrl: ICON_REVIEW,
+      message: `${diff} new review(s) on the Asset Store.`
     });
-    const { unread = 0 } = await chrome.storage.local.get("unread");
-    const newTotal = unread + diff;
-    await chrome.storage.local.set({ unread: newTotal });
-    setBadge(String(newTotal));
+    await pushUnread(diff);
   }
-
-  await chrome.storage.local.set({ lastReviewCount: newCount, lastReviewsData: list });
-  lastFetchedReviews = list;
-  return list;
+  await chrome.storage.local.set({ lastReviewCount: reviewsList.length });
+  return reviewsList;
 }
 
-function showSessionExpiredNotification() {
-  chrome.notifications.create(NOTIFICATION_ID_EXPIRED, {
-    type: "basic",
-    iconUrl: "iconSessionExpired.png",
-    title: "Unity Session Expired",
-    message: "Click here to re-auth at publisher.unity.com."
-  });
-}
+/* ---------- NOTIFICATION CLICKS ---------- */
+chrome.notifications.onClicked.addListener(id => {
+  const url = (id === NOTIF_NEW_REVIEWS)
+    ? "https://publisher.unity.com/reviews"
+    : "https://publisher.unity.com/sales";
+  chrome.tabs.create({ url });
+  chrome.notifications.clear(id);
 
-function showNewSalesNotification(newSalesCount) {
-  chrome.notifications.create(NOTIFICATION_ID_NEW_SALES, {
-    type: "basic",
-    iconUrl: "iconSale.png",
-    title: "New Unity Sale!",
-    message: `You have ${newSalesCount} new sale(s). Click to open publisher.unity.com.`
-  });
-}
-
-chrome.notifications.onClicked.addListener((notificationId) => {
-  if (
-    notificationId === NOTIFICATION_ID_EXPIRED ||
-    notificationId === NOTIFICATION_ID_NEW_SALES
-    || id === NOTIFICATION_ID_NEW_REVIEWS
-  ) {
-        const url =
-      id === NOTIFICATION_ID_NEW_REVIEWS
-        ? "https://publisher.unity.com/reviews"
-        : "https://publisher.unity.com/sales";
-    chrome.tabs.create({ url });
-    chrome.notifications.clear(notificationId);
+  /* If notification was for sales or reviews, mark as read (clear badge) */
+  if ([NOTIF_NEW_SALES, NOTIF_NEW_REVIEWS].includes(id)) {
+    chrome.storage.local.set({ unread: 0 }, clearBadge);
   }
 });
 
+/* ---------- NOTIFICATION CLOSED (dismissed by user) ---------- */
+chrome.notifications.onClosed.addListener((id, byUser) => {
+  if (byUser && [NOTIF_NEW_SALES, NOTIF_NEW_REVIEWS].includes(id)) {
+    chrome.storage.local.set({ unread: 0 }, clearBadge);
+  }
+});
+
+/* ---------- CSRF COOKIE HELPER ---------- */
 function getCsrfCookie() {
-  return new Promise((resolve) => {
-    chrome.cookies.get({ url: "https://publisher.unity.com", name: "_csrf" }, (cookie) => {
+  return new Promise(resolve => {
+    chrome.cookies.get({ url: "https://publisher.unity.com", name: "_csrf" }, cookie => {
       resolve(cookie ? cookie.value : null);
     });
   });
 }
+
+/* ---------- SESSION EXPIRED NOTIFICATION ---------- */
+function showSessionExpiredNotification() {
+  chrome.notifications.create(NOTIF_EXPIRED, {
+    type: "basic",
+    title: "Unity Session Expired",
+    iconUrl: ICON_EXPIRED,
+    message: "Click to log in again."
+  });
+}
+
+/* ---------- WARM-UP (initial fetch on startup) ---------- */
+(async () => {
+  try {
+    await checkForNewSales();
+    await checkForNewReviews();
+  } catch (e) {
+    console.warn("Warm-up failed:", e);
+  }
+})();

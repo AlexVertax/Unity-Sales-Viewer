@@ -24,21 +24,6 @@ Modern Manifest V3 helper for Unity Asset‑Store publishers:
 
 ---
 
-## 🧪 Testing notifications
-
-Open the **service‑worker** console:
-
-1. `chrome://extensions` → *Unity Publisher Sales Watcher* → **Service Worker** (Inspect).  
-2. In the console run:
-
-```js
-// Test “session expired”
-showSessionExpiredNotification();
-
-// Test “new sales” – pretend 3 new items
-showNewSalesNotification(3);
-```
-Each command fires the corresponding notification so you can verify layout and click‑through behaviour.
 
 🔧 Tweaks
 

@@ -1,47 +1,32 @@
-# 🛒 Unity Publisher Sales Watcher (Chrome Extension)
+# 🛒 Unity Publisher Dashboard – Chrome Extension
 
-A lightweight Manifest V3 extension that
+Modern Manifest V3 helper for Unity Asset‑Store publishers:
 
-* polls the **Unity Publisher v2 API** every 10 minutes,
-* pops desktop notifications  
-  * **“New Sales!”** – when your monthly‑sales list grows,  
-  * **“Session Expired”** – when your CSRF/session cookies go stale,
-* opens **`publisher.unity.com/sales`** on notification click so you can re‑auth or review sales,
-* shows an in‑popup **sales table** with **Gross Σ** & **Revenue Σ** totals,
-* stores **no credentials** – it re‑uses the cookies already set by Unity when you’re logged in.
+| What it does | How |
+|--------------|------|
+| **Sales & Reviews tabs** in a polished popup | reads the same endpoints the portal uses |
+| **Gross Σ / Revenue Σ** at a glance | sums the monthly‑sales JSON |
+| **Desktop notifications every 10 min** | new sales, new reviews, session‑expired |
+| **Click a notification →** opens the relevant portal page | no credentials stored |
 
----
-
-## ✨ Features
-
-| Feature                    | Details                                                                    |
-|----------------------------|----------------------------------------------------------------------------|
-| Background polling         | `chrome.alarms` every 10 min → fetch *monthly‑sales* for the current month |
-| CSRF handling              | Reads the `_csrf` cookie → sets `X‑CSRF‑Token` automatically               |
-| New‑sales detection        | Compares record count with previous check; diff ⇒ “New Sales” notification |
-| Session‑expiry detection   | 401 / 403 or missing `_csrf` → “Session Expired” notification              |
-| Popup UI                   | Table: Name / Price / Gross / Revenue / Sales / Refunds / Chargebacks / First / Last |
-| Totals                     | Gross Σ and Revenue Σ displayed above the table                            |
-| Manual refresh             | **Refresh Sales** button for on‑demand fetch                               |
-| Notification click‑through | Opens `https://publisher.unity.com/sales` in a new tab                     |
 
 ---
 
-## 🚀 Install locally
+## 🔧 Installation (local)
 
-1. **Clone** or download this repo.  
-2. Go to `chrome://extensions`, enable **Developer mode**.  
-3. Click **Load unpacked** and choose the `unity-sales-extension` folder.  
-4. Log in to <https://publisher.unity.com> in a normal tab.  
-5. That’s it!  
-   * The popup immediately shows cached data (if any).  
-   * Background job checks every 10 minutes and fires notifications.
+1. **Clone / download** this repo.  
+2. In Chrome/Edge open `chrome://extensions` and enable **Developer mode**.  
+3. Click **Load unpacked** → select the `unity-sales-extension` folder.  
+4. Log in to <https://publisher.unity.com> in a normal tab (sets the `_csrf` cookie).  
+5. You’re done:
+   * Popup instantly shows cached sales + reviews.  
+   * Background worker polls every 10 minutes.  
 
 ---
 
 ## 🧪 Testing notifications
 
-Open the Service‑Worker console:
+Open the **service‑worker** console:
 
 1. `chrome://extensions` → *Unity Publisher Sales Watcher* → **Service Worker** (Inspect).  
 2. In the console run:

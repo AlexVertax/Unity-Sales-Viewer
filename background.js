@@ -227,22 +227,22 @@ async function checkForNewReviews() {
 }
 
 /* ---------- NOTIFICATION CLICKS ---------- */
-chrome.notifications.onClicked.addListener(id => {
-  const url = (id === NOTIF_NEW_REVIEWS)
+chrome.notifications.onClicked.addListener(notificationId => {
+  const url = (notificationId === NOTIF_NEW_REVIEWS)
     ? "https://publisher.unity.com/reviews"
     : "https://publisher.unity.com/sales";
   chrome.tabs.create({ url });
-  chrome.notifications.clear(id);
+  chrome.notifications.clear(notificationId);
 
   /* If notification was for sales or reviews, mark as read (clear badge) */
-  if ([NOTIF_NEW_SALES, NOTIF_NEW_REVIEWS].includes(id)) {
+  if ([NOTIF_NEW_SALES, NOTIF_NEW_REVIEWS].includes(notificationId)) {
     chrome.storage.local.set({ unread: 0 }, clearBadge);
   }
 });
 
 /* ---------- NOTIFICATION CLOSED (dismissed by user) ---------- */
-chrome.notifications.onClosed.addListener((id, byUser) => {
-  if (byUser && [NOTIF_NEW_SALES, NOTIF_NEW_REVIEWS].includes(id)) {
+chrome.notifications.onClosed.addListener((notificationId, byUser) => {
+  if (byUser && [NOTIF_NEW_SALES, NOTIF_NEW_REVIEWS].includes(notificationId)) {
     chrome.storage.local.set({ unread: 0 }, clearBadge);
   }
 });

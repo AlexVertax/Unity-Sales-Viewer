@@ -51,16 +51,35 @@
   color:var(--text);
   font-weight:600;
 }
-
+.status{
+  display:flex;
+  gap:16px;
+  margin:10px 0 12px;
+  padding:0;                 /* nothing inside */
+  background:none;
+  border:none;
+}
+.zone{
+  flex:1;
+  text-align:center;
+  padding:9px 14px;
+  background:var(--bg-status);
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size: 1.2em;
+}
+.status .value{ font-weight:600 }
   /* ----- REFRESH BTN ----- */
-  #refreshBtn{all:unset;display:inline-block;margin-bottom:12px;padding:7px 20px;
+  #refreshBtn{all:unset;display:inline-block;margin-bottom:4px;padding:7px 20px;
               background:var(--accent);color:#fff;border-radius:26px;font-size:15px;cursor:pointer;user-select:none}
   #refreshBtn:hover{background:#0066e0} #refreshBtn:active{background:#0057c2}
 
   /* ----- STATUS (sales only) ----- */
-  .status{margin:10px 0 12px;padding:9px 14px;background:var(--bg-status);
-          border:1px solid var(--border);border-radius:8px;font-size:15px;display:flex;gap:32px}
-  .status .value{font-weight:600}
+
+  .status .value{
+    font-weight:600;
+    
+  }
 
   /* ----- TABLE BOX ----- */
   .table-box{max-height:400px;overflow-y:auto}
@@ -85,9 +104,14 @@
     <button id="refreshBtn">Refresh</button>
 
     <!-- SALES TOTALS -->
+
     <div class="status" data-panel="sales">
-      Gross $&nbsp;<span id="totalGross"   class="value">–</span>
-      Revenue $&nbsp;<span id="totalRevenue" class="value">–</span>
+      <div class="zone">
+        Gross :&nbsp;<span id="totalGross" class="value">–</span> $
+      </div>
+      <div class="zone">
+        Revenue :&nbsp;<span id="totalRevenue" class="value">–</span> $
+      </div>
     </div>
 
     <!-- SALES TABLE -->

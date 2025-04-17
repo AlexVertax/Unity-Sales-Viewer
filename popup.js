@@ -36,6 +36,8 @@ function isoToPretty(str){
   if(isNaN(d)) return str;                       // fallback
   return `${d.toISOString().slice(0,10)} | ${d.toISOString().slice(11,19)}`;
 }
+/* "50.00" → "50.00 $" */
+function money(str){ return (str ?? "").toString() + " $"; }
   /* ---------- FETCH FUNCTIONS ---------- */
   function fetchSales(){
     blankSales();   // quick visual reset
@@ -63,8 +65,8 @@ function isoToPretty(str){
       const tr = document.createElement("tr");
       addCell(tr,it.name);
       addCell(tr,it.price);
-      addCell(tr,it.gross);
-      addCell(tr,it.revenue);
+      addCell(tr, money(it.gross));
+      addCell(tr, money(it.revenue));
       addCell(tr,it.sales);
       addCell(tr,it.refunds);
       addCell(tr,it.chargebacks);
@@ -74,8 +76,8 @@ function isoToPretty(str){
       grossSum += toNum(it.gross);
       revSum   += toNum(it.revenue);
     });
-    totalGrossEl.textContent   = grossSum.toFixed(2);
-    totalRevenueEl.textContent = revSum.toFixed(2);
+     totalGrossEl.textContent   = grossSum.toFixed(2);
+     totalRevenueEl.textContent = revSum.toFixed(2);
   }
 
   /* ---------- RENDER REVIEWS ---------- */

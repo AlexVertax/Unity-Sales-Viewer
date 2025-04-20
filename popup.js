@@ -1,3 +1,13 @@
+/* ────────────────────────────────────────────────────────────
+ *  Unity Sales Viewer – Chrome Extension
+ *  © 2025  Limitless Unity Development
+ *  Licensed under the MIT License
+ *  https://opensource.org/licenses/MIT
+ *
+ *  This extension is in no way affiliated with, authorized,
+ *  maintained, sponsored or endorsed by Unity Technologies
+ *  or any of its affiliates or subsidiaries.
+ ──────────────────────────────────────────────────────────── */
 document.addEventListener("DOMContentLoaded", () => {
   const refreshBtn   = document.getElementById("refreshBtn");
   const totalGross   = document.getElementById("totalGross");
@@ -23,13 +33,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Refresh button
-  refreshBtn.addEventListener("click", async () => {
-    await ensureCsrf();  // renew session if needed
+  refreshBtn.addEventListener("click", () => {
     const active = document.querySelector(".tab.active").dataset.tab;
     active === "reviews" ? fetchReviews() : fetchSales();
   });
 
-  // Clear badge when popup opens
+  // Clear badge count and mark notifications read when popup opens (Fix #5)
   chrome.runtime.sendMessage({ type:"CLEAR_BADGE" });
 
   function fetchSales() {
@@ -104,7 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
       chrome.cookies.get({ url:"https://publisher.unity.com", name:"_csrf" }, c => {
         if (c) return res();
         chrome.tabs.create({ url:"https://publisher.unity.com/sales", active:false }, tab => {
-          setTimeout(() => chrome.tabs.remove(tab.id, res), 4000);
+          setTimeout(() => chrome.tabs.remove(tab.id, res), 2000);
         });
       });
     });

@@ -1,6 +1,6 @@
 {
-  "name": "Unity Sales Viewer",
-  "version": "1.3.2", 
+  "name": "Unity Publisher Dashboard Extension",
+  "version": "1.4.0", 
   "manifest_version": 3,
   "description": "Checks Unity Publisher sales and reviews, notifies on new sales and reviews, and displays them in a nice table.", 
   "permissions": [

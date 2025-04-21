@@ -119,3 +119,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+document.getElementById('openPortalBtn').addEventListener('click', () => {
+  const activeTab = document.querySelector('.tab.active').dataset.tab;
+  const url = activeTab === 'reviews' 
+    ? 'https://publisher.unity.com/reviews' 
+    : 'https://publisher.unity.com/sales';
+
+  chrome.tabs.create({ url });
+});

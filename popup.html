@@ -21,25 +21,69 @@
 
   h1{margin:0 0 14px;font-size:22px;font-weight:600}
 
-  /* ----- TAB BAR ----- */
-  .tabbar{display:flex; gap:0; margin-bottom:14px; border-bottom:1px solid var(--border);}
-  .tab{all:unset; cursor:pointer; padding:8px 22px 7px; font-size:14px; color:#444;
-       background:#e8eaed; border:1px solid var(--border); border-bottom:none;
-       border-radius:10px 10px 0 0; margin-right:3px; position:relative; top:1px;
-       transition:background .15s;}
-  .tab:hover  { background:#dfe2e6; }
-  .tab.active{
-    background:var(--bg-card);
-    color:var(--text);
-    font-weight:600;
-  }
+  .tabbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 0;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
 
-  /* ----- REFRESH BUTTON ----- */
-  #refreshBtn{all:unset;display:inline-block;margin-bottom:4px;padding:7px 20px;
-              background:var(--accent);color:#fff;border-radius:26px;font-size:15px;
-              cursor:pointer;user-select:none}
-  #refreshBtn:hover{background:#0066e0}
-  #refreshBtn:active{background:#0057c2}
+.tabs-left {
+  display: flex;
+}
+
+.buttons-right {
+  display: flex;
+  gap: 6px;
+}
+
+.tab {
+  all: unset;
+  cursor: pointer;
+  padding: 8px 22px 7px;
+  font-size: 14px;
+  color: #444;
+  background: #e8eaed;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  position: relative;
+  top: 1px;
+  transition: background .15s;
+}
+
+.tab:hover {
+  background: #dfe2e6;
+}
+
+.tab.active {
+  background: var(--bg-card);
+  color: var(--text);
+  font-weight: 600;
+}
+
+#refreshBtn, #openPortalBtn {
+  all: unset;
+  padding: 6px 16px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 26px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 3px; /* align to tab bottom */
+}
+
+#refreshBtn:hover, #openPortalBtn:hover {
+  background: #0066e0;
+}
+
+#refreshBtn:active, #openPortalBtn:active {
+  background: #0057c2;
+}
+
 
   /* ----- STATUS BOXES ----- */
   .status{display:flex; gap:16px; margin:10px 0 12px;}
@@ -64,15 +108,17 @@
 <body>
   <div class="card">
 
-    <h1>Unity Publisher Dashboard</h1>
-
-    <!-- TAB BAR -->
-    <div class="tabbar">
-      <button class="tab active" data-tab="sales">Sales</button>
-      <button class="tab"          data-tab="reviews">Reviews</button>
-    </div>
-
+<!-- TAB BAR -->
+<div class="tabbar">
+  <div class="tabs-left">
+    <button class="tab active" data-tab="sales">Sales</button>
+    <button class="tab" data-tab="reviews">Reviews</button>
+  </div>
+  <div class="buttons-right">
     <button id="refreshBtn">Refresh</button>
+    <button id="openPortalBtn">Unity Publisher Portal</button>
+  </div>
+</div>
 
     <!-- SALES PANEL -->
     <div class="status" data-panel="sales">

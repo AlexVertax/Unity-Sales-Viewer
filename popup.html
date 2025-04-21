@@ -37,6 +37,7 @@
 .buttons-right {
   display: flex;
   gap: 6px;
+  margin-bottom: 15px;
 }
 
 .tab {
@@ -88,16 +89,47 @@
   /* ----- STATUS BOXES ----- */
   .status{display:flex; gap:16px; margin:10px 0 12px;}
   .zone{flex:1; text-align:center; padding:9px 14px; background:var(--bg-status);
-        border:1px solid var(--border); border-radius:8px; font-size:1.2em;}
+        border:px solid var(--border); border-radius:8px; font-size:1.2em;}
   .status .value{font-weight:600}
 
-  /* ----- TABLE BOX ----- */
-  .table-box{max-height:400px; overflow-y:auto;}
-  table{width:100%; border-collapse:collapse; font-size:14px;}
-  thead th{background:var(--bg-head); font-weight:600; border-bottom:1px solid var(--border);
-           padding:9px 10px; text-align:left; white-space:nowrap;}
-  tbody tr:nth-child(even){background:var(--bg-zebra);}
-  tbody td{border-bottom:1px solid var(--border); padding:7px 10px; white-space:nowrap; color:var(--muted);}
+/* ----- TABLE BOX ----- */
+.table-box{max-height:400px; overflow-y:auto;}
+table{width:100%; border-collapse:collapse; font-size:14px;}
+
+/* sales & general table headers stay no-wrap */
+thead th{background:var(--bg-head); font-weight:600; border-bottom:1px solid var(--border);
+         padding:9px 10px; text-align:left; white-space:nowrap;}
+
+/* sales & general table cells stay no-wrap by default */
+tbody td{border-bottom:1px solid var(--border); padding:7px 10px; white-space:nowrap; color:var(--muted);}
+
+/* ===== reviews-specific overrides ===== */
+#reviewsTable {
+    table-layout: fixed; 
+    width: 100%;
+  }
+
+  /* Column widths + wrapping rules */
+  #reviewsTable th:nth-child(1),
+  #reviewsTable td:nth-child(1) { width: 17%; white-space: normal; }        /* Date */
+  #reviewsTable th:nth-child(2),
+  #reviewsTable td:nth-child(2) { width: 20%; white-space: normal; }        /* Asset */
+  #reviewsTable th:nth-child(3),
+  #reviewsTable td:nth-child(3) { width: 10%; white-space: nowrap; }        /* Rating */
+
+  #reviewsTable th:nth-child(4),
+  #reviewsTable td:nth-child(4) {                                         
+    width: 20%;
+    white-space: normal;     
+    word-break: break-word;    
+  }
+  #reviewsTable th:nth-child(5),
+  #reviewsTable td:nth-child(5) {
+    width: 45%;
+    white-space: normal;
+    word-break: break-word;
+  }
+
 
   /* Rounded popup window */
   html, body{border-radius:14px; overflow:hidden;}
@@ -134,8 +166,7 @@
         <thead>
           <tr>
             <th>Name</th><th>Price</th><th>Gross</th><th>Revenue</th>
-            <th>Sales</th><th>Refunds</th><th>Chargebacks</th>
-            <th>First</th><th>Last</th>
+            <th>Sales</th><th>Last<th>First</th></th>
           </tr>
         </thead>
         <tbody></tbody>

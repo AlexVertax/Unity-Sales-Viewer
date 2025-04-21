@@ -66,11 +66,9 @@ document.addEventListener("DOMContentLoaded", () => {
         r.price,
         money(r.gross),
         money(r.revenue),
-        r.sales,
-        r.refunds,
-        r.chargebacks,
+        Number(r.sales) - Number(r.refunds),
+        pretty(r.last),
         pretty(r.first),
-        pretty(r.last)
       ].forEach(txt => {
         const td = tr.insertCell();
         td.textContent = txt;

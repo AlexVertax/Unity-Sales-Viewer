@@ -360,7 +360,7 @@ async function checkForNewReviews() {
     for (const rv of newReviews) {
       const stars = "★".repeat(Number(rv.rating) || 0) || "–";
       const title = `${stars}  ${rv.subject}`;
-      const body  = rv.body.length > 200 ? rv.body.slice(0, 200) + "…" : rv.body;
+      const body  = rv.body.length > 2000 ? rv.body.slice(0, 2000) + "…" : rv.body;
         // give each review its own unique ID so it never collides
         const notifId = `${NOTIF_NEW_REVIEWS}-${Date.now()}-${Math.floor(Math.random()*1e6)}`;
         chrome.notifications.create(notifId, {

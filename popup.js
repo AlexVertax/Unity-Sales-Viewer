@@ -116,6 +116,20 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   }
+  const themeToggle = document.getElementById("themeToggle");
+  const htmlEl      = document.documentElement;
+  
+  // apply saved theme on load
+  const saved = localStorage.getItem("theme") || "light";
+  htmlEl.setAttribute("data-theme", saved);
+  
+  // toggle on click
+  themeToggle.addEventListener("click", () => {
+    const next = htmlEl.getAttribute("data-theme")==="dark" ? "light" : "dark";
+    htmlEl.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+  });
+
 });
 document.getElementById('openPortalBtn').addEventListener('click', () => {
   const activeTab = document.querySelector('.tab.active').dataset.tab;
@@ -125,3 +139,5 @@ document.getElementById('openPortalBtn').addEventListener('click', () => {
 
   chrome.tabs.create({ url });
 });
+
+

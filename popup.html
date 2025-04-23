@@ -10,13 +10,44 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-  :root{
-    --accent:#0077ff;  --border:#d0d4d9; --bg-card:#fff;
-    --bg-head:#f1f3f6; --bg-zebra:#fafbfc; --bg-status:#f5f7fa;
-    --text:#202124;    --muted:#5f6368;
+  /* ===== color variables ===== */
+  :root {
+    --bg-page:   #fff;
+    --text:      #202124;
+    --muted:     #5f6368;
+    --bg-card:   #fff;
+    --bg-head:   #f1f3f6;
+    --bg-zebra:  #fafbfc;
+    --bg-status: #f5f7fa;
+    --btn-bg: var(--accent);
+  --btn-bg-hover: #0066e0;
+  --btn-bg-active: #0057c2;
+  --sun-color: #FACC15;      /* a warm, saturated sun-yellow */
+  --btn-color: #ffffff;
+    --border:    #d0d4d9;
+    --accent:    #0077ff;
   }
 
-  html,body{margin:0;padding:0;font-family:"Inter",Arial,sans-serif;color:var(--text);width:760px;box-sizing:border-box}
+  /* ===== dark theme overrides ===== */
+  [data-theme="dark"] {
+    --bg-page:   #1e1e1e;
+    --text:      #e0e0e0;
+    --muted:     #a0a0a0;
+    --bg-card:   #2a2a2a;
+    --bg-head:   #333333;
+    --bg-zebra:  #2f2f2f;
+    --bg-status: #3a3a3a;
+    --btn-bg: #444;
+    --sun-color: #FACC15;      
+  --btn-color: #e0e0e0;
+  --btn-hover: #555;
+  --btn-active: #666;
+    --border:    #444444;
+    --accent:    #3399ff;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  html,body{margin:0;padding:0;font-family:"Inter",Arial,sans-serif;color:var(--text);background-color: var(--bg-page);width:760px;box-sizing:border-box}
   .card{padding:22px 24px 20px;border-radius:10px;background:var(--bg-card);box-shadow:0 2px 6px rgba(0,0,0,.08)}
 
   h1{margin:0 0 14px;font-size:22px;font-weight:600}
@@ -36,6 +67,7 @@
 
 .buttons-right {
   display: flex;
+  align-items: center;   /* vertically center icons & buttons */
   gap: 6px;
   margin-bottom: 15px;
 }
@@ -45,8 +77,8 @@
   cursor: pointer;
   padding: 8px 22px 7px;
   font-size: 14px;
-  color: #444;
-  background: #e8eaed;
+  color: var(--text);
+  background: var(--bg-head);
   border: 1px solid var(--border);
   border-bottom: none;
   border-radius: 10px 10px 0 0;
@@ -56,7 +88,7 @@
 }
 
 .tab:hover {
-  background: #dfe2e6;
+  background: var(--bg-zebra);
 }
 
 .tab.active {
@@ -65,24 +97,31 @@
   font-weight: 600;
 }
 
-#refreshBtn, #openPortalBtn {
+#refreshBtn,
+#openPortalBtn,
+#toggleThemeBtn {
   all: unset;
   padding: 6px 16px;
-  background: var(--accent);
-  color: #fff;
+  background: var(--btn-bg);
+  color: var(--btn-color);
   border-radius: 26px;
   font-size: 13px;
   cursor: pointer;
   user-select: none;
-  margin-bottom: 3px; /* align to tab bottom */
+  margin-bottom: 3px;
+  transition: background 0.2s, filter 0.2s;
 }
 
-#refreshBtn:hover, #openPortalBtn:hover {
-  background: #0066e0;
+#refreshBtn:hover,
+#openPortalBtn:hover,
+#toggleThemeBtn:hover {
+  background: var(--btn-bg-hover);
 }
 
-#refreshBtn:active, #openPortalBtn:active {
-  background: #0057c2;
+#refreshBtn:active,
+#openPortalBtn:active,
+#toggleThemeBtn:active {
+  background: var(--btn-bg-active);
 }
 
 
@@ -94,6 +133,41 @@
 
 /* ----- TABLE BOX ----- */
 .table-box{max-height:400px; overflow-y:auto;}
+/* ─── Scrollbar (WebKit browsers) ─── */
+.table-box::-webkit-scrollbar {
+  width: 6px;                     /* always reserve 6px */
+  background: transparent;        /* make the track invisible */
+}
+.table-box::-webkit-scrollbar-thumb {
+  background: transparent;        /* make the thumb invisible */
+  border-radius: 3px;
+  transition: background 0.9s;
+}
+
+/* On hover, turn the thumb back on */
+.table-box:hover::-webkit-scrollbar-thumb {
+  background: var(--muted);
+}
+
+/* ─── Scrollbar (Firefox) ─── */
+.table-box {
+  /* make it invisible by default */
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
+.table-box:hover {
+  /* show a thin, colored thumb on hover */
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted) transparent;
+}
+
+.table-box:hover::-webkit-scrollbar {
+  width: 16px;
+}
+.table-box:hover::-webkit-scrollbar-thumb {
+  background-color: var(--muted);
+  border-radius: 3px;
+}
 table{width:100%; border-collapse:collapse; font-size:14px;}
 
 /* sales & general table headers stay no-wrap */
@@ -129,10 +203,46 @@ tbody td{border-bottom:1px solid var(--border); padding:7px 10px; white-space:no
     white-space: normal;
     word-break: break-word;
   }
+/* theme toggle container */
+#themeToggle {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  margin-bottom: 3px;
+}
 
+/* both icons occupy same spot */
+#themeToggle .icon {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  fill: var(--text);
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  opacity: 1;
+}
+
+/* start with moon hidden */
+#themeToggle .icon-moon { opacity: 0; transform: rotate(-15deg) scale(0.8); }
+
+.icon-sun path,
+.icon-sun circle {
+  fill: var(--sun-color);
+  stroke: var(--sun-color);
+}
+
+/* when dark theme is active */
+[data-theme="dark"] #themeToggle .icon-sun {
+  opacity: 0;
+  transform: rotate(15deg) scale(0.8);
+}
+[data-theme="dark"] #themeToggle .icon-moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
 
   /* Rounded popup window */
-  html, body{border-radius:14px; overflow:hidden;}
+  html, body{overflow:hidden;}
   body{box-shadow:0 4px 14px rgba(0,0,0,.25);}
 </style>
 </head>
@@ -148,7 +258,39 @@ tbody td{border-bottom:1px solid var(--border); padding:7px 10px; white-space:no
   </div>
   <div class="buttons-right">
     <button id="refreshBtn">Refresh</button>
+    
     <button id="openPortalBtn">Unity Publisher Portal</button>
+
+
+
+      <div id="themeToggle" title="Toggle theme">
+        <!-- Sun (light) -->
+
+        <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"
+        xmlns="http://www.w3.org/2000/svg">
+     <!-- solid center -->
+     <circle cx="12" cy="12" r="4" fill="var(--sun-color)" />
+     <!-- stroked rays -->
+     <g stroke="var(--sun-color)" stroke-width="2" stroke-linecap="round">
+       <path d="M12 2v2" />          <!-- top -->
+       <path d="M12 20v2" />         <!-- bottom -->
+       <path d="M2 12h2" />          <!-- left -->
+       <path d="M20 12h2" />         <!-- right -->
+       <path d="M4.93 4.93l1.414 1.414" />      <!-- top-left -->
+       <path d="M17.657 17.657l1.414 1.414" />  <!-- bottom-right -->
+       <path d="M4.93 19.07l1.414-1.414" />     <!-- bottom-left -->
+       <path d="M17.657 6.343l1.414-1.414" />   <!-- top-right -->
+     </g>
+   </svg>
+        
+        <!-- Moon (dark) -->
+        <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3c.27 0 .54.01.8.03A7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </div>
+
+
+
   </div>
 </div>
 

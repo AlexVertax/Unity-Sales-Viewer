@@ -1,338 +1,433 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Unity Publisher Dashboard</title>
+    <meta charset="UTF-8"/>
+    <title>Unity Publisher Dashboard</title>
 
-<!-- Google Font -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<style>
-  /* ===== color variables ===== */
-  :root {
-    --bg-page:   #fff;
-    --text:      #202124;
-    --muted:     #5f6368;
-    --bg-card:   #fff;
-    --bg-head:   #f1f3f6;
-    --bg-zebra:  #fafbfc;
-    --bg-status: #f5f7fa;
-    --btn-bg: var(--accent);
-  --btn-bg-hover: #0066e0;
-  --btn-bg-active: #0057c2;
-  --sun-color: #FACC15;      /* a warm, saturated sun-yellow */
-  --btn-color: #ffffff;
-    --border:    #d0d4d9;
-    --accent:    #0077ff;
-  }
+    <style>
+        /* ===== color variables ===== */
+        :root {
+            --bg-page: #fff;
+            --text: #202124;
+            --muted: #5f6368;
+            --bg-card: #fff;
+            --bg-head: #f1f3f6;
+            --bg-zebra: #fafbfc;
+            --bg-status: #f5f7fa;
+            --btn-bg: var(--accent);
+            --btn-bg-hover: #0066e0;
+            --btn-bg-active: #0057c2;
+            --sun-color: #FACC15; /* a warm, saturated sun-yellow */
+            --btn-color: #ffffff;
+            --border: #d0d4d9;
+            --accent: #0077ff;
+        }
 
-  /* ===== dark theme overrides ===== */
-  [data-theme="dark"] {
-    --bg-page:   #1e1e1e;
-    --text:      #e0e0e0;
-    --muted:     #a0a0a0;
-    --bg-card:   #2a2a2a;
-    --bg-head:   #333333;
-    --bg-zebra:  #2f2f2f;
-    --bg-status: #3a3a3a;
-    --btn-bg: #444;
-    --sun-color: #FACC15;      
-  --btn-color: #e0e0e0;
-  --btn-hover: #555;
-  --btn-active: #666;
-    --border:    #444444;
-    --accent:    #3399ff;
-    transition: background-color 0.3s, color 0.3s;
-  }
+        /* ===== dark theme overrides ===== */
+        [data-theme="dark"] {
+            --bg-page: #1e1e1e;
+            --text: #e0e0e0;
+            --muted: #a0a0a0;
+            --bg-card: #2a2a2a;
+            --bg-head: #333333;
+            --bg-zebra: #2f2f2f;
+            --bg-status: #3a3a3a;
+            --btn-bg: #444;
+            --sun-color: #FACC15;
+            --btn-color: #e0e0e0;
+            --btn-hover: #555;
+            --btn-active: #666;
+            --border: #444444;
+            --accent: #3399ff;
+            transition: background-color 0.3s, color 0.3s;
+        }
 
-  html,body{margin:0;padding:0;font-family:"Inter",Arial,sans-serif;color:var(--text);background-color: var(--bg-page);width:760px;box-sizing:border-box}
-  .card{padding:22px 24px 20px;border-radius:10px;background:var(--bg-card);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", Arial, sans-serif;
+            color: var(--text);
+            background-color: var(--bg-page);
+            width: 760px;
+            box-sizing: border-box
+        }
 
-  h1{margin:0 0 14px;font-size:22px;font-weight:600}
+        .card {
+            padding: 22px 24px 20px;
+            border-radius: 10px;
+            background: var(--bg-card);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, .08)
+        }
 
-  .tabbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 0;
-  margin-bottom: 14px;
-  border-bottom: 1px solid var(--border);
-}
+        h1 {
+            margin: 0 0 14px;
+            font-size: 22px;
+            font-weight: 600
+        }
 
-.tabs-left {
-  display: flex;
-}
+        .tabbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 0;
+            margin-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
 
-.buttons-right {
-  display: flex;
-  align-items: center;   /* vertically center icons & buttons */
-  gap: 6px;
-  margin-bottom: 15px;
-}
+        .tabs-left {
+            display: flex;
+        }
 
-.tab {
-  all: unset;
-  cursor: pointer;
-  padding: 8px 22px 7px;
-  font-size: 14px;
-  color: var(--text);
-  background: var(--bg-head);
-  border: 1px solid var(--border);
-  border-bottom: none;
-  border-radius: 10px 10px 0 0;
-  position: relative;
-  top: 1px;
-  transition: background .15s;
-}
+        .buttons-right {
+            display: flex;
+            align-items: center; /* vertically center icons & buttons */
+            gap: 6px;
+            margin-bottom: 15px;
+        }
 
-.tab:hover {
-  background: var(--bg-zebra);
-}
+        .tab {
+            all: unset;
+            cursor: pointer;
+            padding: 8px 22px 7px;
+            font-size: 14px;
+            color: var(--text);
+            background: var(--bg-head);
+            border: 1px solid var(--border);
+            border-bottom: none;
+            border-radius: 10px 10px 0 0;
+            position: relative;
+            top: 1px;
+            transition: background .15s;
+        }
 
-.tab.active {
-  background: var(--bg-card);
-  color: var(--text);
-  font-weight: 600;
-}
+        .tab:hover {
+            background: var(--bg-zebra);
+        }
 
-#refreshBtn,
-#openPortalBtn,
-#toggleThemeBtn {
-  all: unset;
-  padding: 6px 16px;
-  background: var(--btn-bg);
-  color: var(--btn-color);
-  border-radius: 26px;
-  font-size: 13px;
-  cursor: pointer;
-  user-select: none;
-  margin-bottom: 3px;
-  transition: background 0.2s, filter 0.2s;
-}
+        .tab.active {
+            background: var(--bg-card);
+            color: var(--text);
+            font-weight: 600;
+        }
 
-#refreshBtn:hover,
-#openPortalBtn:hover,
-#toggleThemeBtn:hover {
-  background: var(--btn-bg-hover);
-}
+        #refreshBtn,
+        #openPortalBtn,
+        #toggleThemeBtn {
+            all: unset;
+            padding: 6px 16px;
+            background: var(--btn-bg);
+            color: var(--btn-color);
+            border-radius: 26px;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+            margin-bottom: 3px;
+            transition: background 0.2s, filter 0.2s;
+        }
 
-#refreshBtn:active,
-#openPortalBtn:active,
-#toggleThemeBtn:active {
-  background: var(--btn-bg-active);
-}
+        #refreshBtn:hover,
+        #openPortalBtn:hover,
+        #toggleThemeBtn:hover {
+            background: var(--btn-bg-hover);
+        }
+
+        #refreshBtn:active,
+        #openPortalBtn:active,
+        #toggleThemeBtn:active {
+            background: var(--btn-bg-active);
+        }
 
 
-  /* ----- STATUS BOXES ----- */
-  .status{display:flex; gap:16px; margin:10px 0 12px;}
-  .zone{flex:1; text-align:center; padding:9px 14px; background:var(--bg-status);
-        border:px solid var(--border); border-radius:8px; font-size:1.2em;}
-  .status .value{font-weight:600}
+        /* ----- STATUS BOXES ----- */
+        .status {
+            display: flex;
+            gap: 16px;
+            margin: 10px 0 12px;
+        }
 
-/* ----- TABLE BOX ----- */
-.table-box{max-height:400px; overflow-y:auto;}
-/* ─── Scrollbar (WebKit browsers) ─── */
-.table-box::-webkit-scrollbar {
-  width: 6px;                     /* always reserve 6px */
-  background: transparent;        /* make the track invisible */
-}
-.table-box::-webkit-scrollbar-thumb {
-  background: transparent;        /* make the thumb invisible */
-  border-radius: 3px;
-  transition: background 0.9s;
-}
+        .zone {
+            flex: 1;
+            text-align: center;
+            padding: 9px 14px;
+            background: var(--bg-status);
+            border: px solid var(--border);
+            border-radius: 8px;
+            font-size: 1.2em;
+        }
 
-/* On hover, turn the thumb back on */
-.table-box:hover::-webkit-scrollbar-thumb {
-  background: var(--muted);
-}
+        .status .value {
+            font-weight: 600
+        }
 
-/* ─── Scrollbar (Firefox) ─── */
-.table-box {
-  /* make it invisible by default */
-  scrollbar-width: none;
-  scrollbar-color: transparent transparent;
-}
-.table-box:hover {
-  /* show a thin, colored thumb on hover */
-  scrollbar-width: thin;
-  scrollbar-color: var(--muted) transparent;
-}
+        /* ----- TABLE BOX ----- */
+        .table-box {
+            max-height: 400px;
+            overflow-y: auto;
+        }
 
-.table-box:hover::-webkit-scrollbar {
-  width: 16px;
-}
-.table-box:hover::-webkit-scrollbar-thumb {
-  background-color: var(--muted);
-  border-radius: 3px;
-}
-table{width:100%; border-collapse:collapse; font-size:14px;}
+        /* ─── Scrollbar (WebKit browsers) ─── */
+        .table-box::-webkit-scrollbar {
+            width: 6px; /* always reserve 6px */
+            background: transparent; /* make the track invisible */
+        }
 
-/* sales & general table headers stay no-wrap */
-thead th{background:var(--bg-head); font-weight:600; border-bottom:1px solid var(--border);
-         padding:9px 10px; text-align:left; white-space:nowrap;}
+        .table-box::-webkit-scrollbar-thumb {
+            background: transparent; /* make the thumb invisible */
+            border-radius: 3px;
+            transition: background 0.9s;
+        }
 
-/* sales & general table cells stay no-wrap by default */
-tbody td{border-bottom:1px solid var(--border); padding:7px 10px; white-space:nowrap; color:var(--muted);}
+        /* On hover, turn the thumb back on */
+        .table-box:hover::-webkit-scrollbar-thumb {
+            background: var(--muted);
+        }
 
-/* ===== reviews-specific overrides ===== */
-#reviewsTable {
-    table-layout: fixed; 
-    width: 100%;
-  }
+        /* ─── Scrollbar (Firefox) ─── */
+        .table-box {
+            /* make it invisible by default */
+            scrollbar-width: none;
+            scrollbar-color: transparent transparent;
+        }
 
-  /* Column widths + wrapping rules */
-  #reviewsTable th:nth-child(1),
-  #reviewsTable td:nth-child(1) { width: 17%; white-space: normal; }        /* Date */
-  #reviewsTable th:nth-child(2),
-  #reviewsTable td:nth-child(2) { width: 20%; white-space: normal; }        /* Asset */
-  #reviewsTable th:nth-child(3),
-  #reviewsTable td:nth-child(3) { width: 10%; white-space: nowrap; }        /* Rating */
+        .table-box:hover {
+            /* show a thin, colored thumb on hover */
+            scrollbar-width: thin;
+            scrollbar-color: var(--muted) transparent;
+        }
 
-  #reviewsTable th:nth-child(4),
-  #reviewsTable td:nth-child(4) {                                         
-    width: 20%;
-    white-space: normal;     
-    word-break: break-word;    
-  }
-  #reviewsTable th:nth-child(5),
-  #reviewsTable td:nth-child(5) {
-    width: 45%;
-    white-space: normal;
-    word-break: break-word;
-  }
-/* theme toggle container */
-#themeToggle {
-  position: relative;
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  margin-bottom: 3px;
-}
+        .table-box:hover::-webkit-scrollbar {
+            width: 16px;
+        }
 
-/* both icons occupy same spot */
-#themeToggle .icon {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  fill: var(--text);
-  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-  opacity: 1;
-}
+        .table-box:hover::-webkit-scrollbar-thumb {
+            background-color: var(--muted);
+            border-radius: 3px;
+        }
 
-/* start with moon hidden */
-#themeToggle .icon-moon { opacity: 0; transform: rotate(-15deg) scale(0.8); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
 
-.icon-sun path,
-.icon-sun circle {
-  fill: var(--sun-color);
-  stroke: var(--sun-color);
-}
+        /* sales & general table headers stay no-wrap */
+        thead th {
+            background: var(--bg-head);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            padding: 9px 10px;
+            text-align: left;
+            white-space: nowrap;
+        }
 
-/* when dark theme is active */
-[data-theme="dark"] #themeToggle .icon-sun {
-  opacity: 0;
-  transform: rotate(15deg) scale(0.8);
-}
-[data-theme="dark"] #themeToggle .icon-moon {
-  opacity: 1;
-  transform: rotate(0deg) scale(1);
-}
+        /* sales & general table cells stay no-wrap by default */
+        tbody td {
+            border-bottom: 1px solid var(--border);
+            padding: 7px 10px;
+            white-space: nowrap;
+            color: var(--muted);
+        }
 
-  /* Rounded popup window */
-  html, body{overflow:hidden;}
-  body{box-shadow:0 4px 14px rgba(0,0,0,.25);}
-</style>
+        #salesTable td:not(:first-child),
+        #salesTable th:not(:first-child) {
+            text-align: right;
+        }
+
+        /* ===== reviews-specific overrides ===== */
+        #reviewsTable {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        /* Column widths + wrapping rules */
+        #reviewsTable th:nth-child(1),
+        #reviewsTable td:nth-child(1) {
+            width: 17%;
+            white-space: normal;
+        }
+
+        /* Date */
+        #reviewsTable th:nth-child(2),
+        #reviewsTable td:nth-child(2) {
+            width: 20%;
+            white-space: normal;
+        }
+
+        /* Asset */
+        #reviewsTable th:nth-child(3),
+        #reviewsTable td:nth-child(3) {
+            width: 10%;
+            white-space: nowrap;
+        }
+
+        /* Rating */
+
+        #reviewsTable th:nth-child(4),
+        #reviewsTable td:nth-child(4) {
+            width: 20%;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        #reviewsTable th:nth-child(5),
+        #reviewsTable td:nth-child(5) {
+            width: 45%;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        #reviewsTable a {
+            text-decoration: none;
+            color: unset;
+        }
+
+        #reviewsTable a:hover {
+            color: var(--accent);
+            text-decoration: dashed underline;
+        }
+
+        /* theme toggle container */
+        #themeToggle {
+            position: relative;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            margin-bottom: 3px;
+        }
+
+        /* both icons occupy same spot */
+        #themeToggle .icon {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            fill: var(--text);
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            opacity: 1;
+        }
+
+        /* start with moon hidden */
+        #themeToggle .icon-moon {
+            opacity: 0;
+            transform: rotate(-15deg) scale(0.8);
+        }
+
+        .icon-sun path,
+        .icon-sun circle {
+            fill: var(--sun-color);
+            stroke: var(--sun-color);
+        }
+
+        /* when dark theme is active */
+        [data-theme="dark"] #themeToggle .icon-sun {
+            opacity: 0;
+            transform: rotate(15deg) scale(0.8);
+        }
+
+        [data-theme="dark"] #themeToggle .icon-moon {
+            opacity: 1;
+            transform: rotate(0deg) scale(1);
+        }
+
+        /* Rounded popup window */
+        html, body {
+            overflow: hidden;
+        }
+
+        body {
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+        }
+    </style>
 </head>
 
 <body>
-  <div class="card">
+<div class="card">
 
-<!-- TAB BAR -->
-<div class="tabbar">
-  <div class="tabs-left">
-    <button class="tab active" data-tab="sales">Sales</button>
-    <button class="tab" data-tab="reviews">Reviews</button>
-  </div>
-  <div class="buttons-right">
-    <button id="refreshBtn">Refresh</button>
-    
-    <button id="openPortalBtn">Unity Publisher Portal</button>
+    <!-- TAB BAR -->
+    <div class="tabbar">
+        <div class="tabs-left">
+            <button class="tab active" data-tab="sales">Sales</button>
+            <button class="tab" data-tab="reviews">Reviews</button>
+        </div>
+        <div class="buttons-right">
+            <button id="refreshBtn">Refresh</button>
 
-
-
-      <div id="themeToggle" title="Toggle theme">
-        <!-- Sun (light) -->
-
-        <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"
-        xmlns="http://www.w3.org/2000/svg">
-     <!-- solid center -->
-     <circle cx="12" cy="12" r="4" fill="var(--sun-color)" />
-     <!-- stroked rays -->
-     <g stroke="var(--sun-color)" stroke-width="2" stroke-linecap="round">
-       <path d="M12 2v2" />          <!-- top -->
-       <path d="M12 20v2" />         <!-- bottom -->
-       <path d="M2 12h2" />          <!-- left -->
-       <path d="M20 12h2" />         <!-- right -->
-       <path d="M4.93 4.93l1.414 1.414" />      <!-- top-left -->
-       <path d="M17.657 17.657l1.414 1.414" />  <!-- bottom-right -->
-       <path d="M4.93 19.07l1.414-1.414" />     <!-- bottom-left -->
-       <path d="M17.657 6.343l1.414-1.414" />   <!-- top-right -->
-     </g>
-   </svg>
-        
-        <!-- Moon (dark) -->
-        <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3c.27 0 .54.01.8.03A7 7 0 0 0 21 12.79z"/>
-        </svg>
-      </div>
+            <button id="openPortalBtn">Unity Publisher Portal</button>
 
 
+            <div id="themeToggle" title="Toggle theme">
+                <!-- Sun (light) -->
 
-  </div>
-</div>
+                <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg">
+                    <!-- solid center -->
+                    <circle cx="12" cy="12" r="4" fill="var(--sun-color)"/>
+                    <!-- stroked rays -->
+                    <g stroke="var(--sun-color)" stroke-width="2" stroke-linecap="round">
+                        <path d="M12 2v2"/>          <!-- top -->
+                        <path d="M12 20v2"/>         <!-- bottom -->
+                        <path d="M2 12h2"/>          <!-- left -->
+                        <path d="M20 12h2"/>         <!-- right -->
+                        <path d="M4.93 4.93l1.414 1.414"/>      <!-- top-left -->
+                        <path d="M17.657 17.657l1.414 1.414"/>  <!-- bottom-right -->
+                        <path d="M4.93 19.07l1.414-1.414"/>     <!-- bottom-left -->
+                        <path d="M17.657 6.343l1.414-1.414"/>   <!-- top-right -->
+                    </g>
+                </svg>
+
+                <!-- Moon (dark) -->
+                <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3c.27 0 .54.01.8.03A7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </div>
+
+
+        </div>
+    </div>
 
     <!-- SALES PANEL -->
+    <h2 data-panel="sales">Sales <span class="sales-month">April 2026</span></h2>
+
     <div class="status" data-panel="sales">
-      <div class="zone">
-        Gross (100%) :&nbsp;<span id="totalGross" class="value">–</span> $
-      </div>
-      <div class="zone">
-        Revenue (70%) :&nbsp;<span id="totalRevenue" class="value">–</span> $
-      </div>
+        <div class="zone">
+            Gross (100%):&nbsp;<span id="totalGross" class="value">–</span>
+        </div>
+        <div class="zone">
+            Net (70%):&nbsp;<span id="totalRevenue" class="value">–</span>
+        </div>
     </div>
     <div class="table-box" data-panel="sales">
-      <table id="salesTable">
-        <thead>
-          <tr>
-            <th>Name</th><th>Price</th><th>Gross</th><th>Revenue</th>
-            <th>Sales</th><th>Last<th>First</th></th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+        <table id="salesTable">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Gross</th>
+                <th>Net</th>
+                <th>Qty</th>
+                <th>Last</th>
+                <th>First</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 
     <!-- REVIEWS PANEL -->
     <div class="table-box" data-panel="reviews" style="display:none;">
-      <table id="reviewsTable">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Asset</th>
-            <th>Rating</th>
-            <th>Subject</th>
-            <th>Review Text</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+        <table id="reviewsTable">
+            <tbody></tbody>
+        </table>
     </div>
 
-  </div>
+</div>
 
-  <script src="popup.js"></script>
+<script src="popup.js"></script>
 </body>
 </html>

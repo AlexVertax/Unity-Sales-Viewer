@@ -59,6 +59,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Render sales table
     function renderSales(list) {
         clearSales();
+        const monthEl = document.querySelector(".sales-month");
+        monthEl.textContent = new Date().toLocaleString("en-US", { month: 'long', year: 'numeric' });
+
         list.sort((a, b) => new Date(b.last) - new Date(a.last));
         let grossSum = 0, revSum = 0;
         list.forEach(r => {

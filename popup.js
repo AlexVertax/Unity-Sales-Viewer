@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const refreshBtn = document.getElementById("refreshBtn");
     const totalGross = document.getElementById("totalGross");
     const totalRevenue = document.getElementById("totalRevenue");
+    const expectedGross = document.getElementById("expectedGross");
+    const expectedNet = document.getElementById("expectedNet");
     const salesTBody = document.querySelector("#salesTable tbody");
     const reviewsTBody = document.querySelector("#reviewsTable tbody");
     const tabs = [...document.querySelectorAll(".tab")];
@@ -82,13 +84,19 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         totalGross.textContent = money(grossSum.toFixed(2));
         totalRevenue.textContent = money(revSum.toFixed(2));
+
+        const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+        const daysPassed = new Date().getDate();
+        const grossPerDay = grossSum / daysPassed;
+        const expectedGrossValue = grossPerDay * daysInMonth;
+        expectedGross.textContent = money(expectedGrossValue.toFixed(2));
+        expectedNet.textContent = money((expectedGrossValue * 0.7).toFixed(2));
     }
 
     // Render reviews table with ★, subject, full text
     function renderReviews(list) {
         clearReviews();
         list.forEach(r => {
-            console.log(r);
             const tr = reviewsTBody.insertRow();
             const td = tr.insertCell();
             const rating = Number(r.rating);

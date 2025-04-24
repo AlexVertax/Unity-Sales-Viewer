@@ -85,19 +85,47 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderReviews(list) {
         clearReviews();
         list.forEach(r => {
+            console.log(r);
             const tr = reviewsTBody.insertRow();
+            const td = tr.insertCell();
             const rating = Number(r.rating);
             const stars = "★".repeat(rating) + "✰".repeat(5 - rating) || "–";
-            [r.createdTime?.slice(0, 10),
-                r.packageName,
-                stars,
-                r.subject,
-                r.body
-            ].forEach(txt => {
-                const td = tr.insertCell();
-                td.textContent = txt;
+
+            [
+                wrapDiv(r.packageName, {
+                    className: "packageName",
+                    href: `https://assetstore.unity.com/packages/slug/${r.packageId}#reviews`
+                }),
+                wrapDiv(stars + " " + r.subject, {
+                    className: "subject",
+                    href: `https://publisher.unity.com/review/${r.threadId}/detail`
+                }),
+                wrapDiv(r.createdTime?.slice(0, 10), {className: "date"} ),
+                wrapDiv(r.body, {className: "body"})
+            ].forEach(el => {
+                td.appendChild(el);
             });
         });
+    }
+
+    const wrapDiv = (text, params) => {
+        const el = document.createElement("div");
+        let textTarget = el;
+
+        if (params.className) el.className = params.className;
+        if (params.id) el.id = params.id;
+
+        if (params.href) {
+            const link = document.createElement("a");
+            link.href = params.href;
+            link.target = "_blank";
+            el.appendChild(link);
+            textTarget = link;
+        }
+
+        textTarget.textContent = text;
+
+        return el;
     }
 
     // Helpers

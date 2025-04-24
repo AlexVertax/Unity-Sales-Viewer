@@ -1,6 +1,6 @@
 /* ────────────────────────────────────────────────────────────
  *  Unity Sales Viewer – Chrome Extension
- *  © 2025  Limitless Unity Development
+ *  © 2025  Limitless Unity Development
  *  Licensed under the MIT License
  *  https://opensource.org/licenses/MIT
  *

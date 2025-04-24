@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"/>
-    <title>Unity Publisher Dashboard</title>
+    <title>Unity Publisher Dashboard</title>
 
-    <!-- Google Font -->
+    <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -233,6 +233,11 @@
             color: var(--muted);
         }
 
+        #salesTable td:not(:first-child),
+        #salesTable th:not(:first-child) {
+            text-align: right;
+        }
+
         /* ===== reviews-specific overrides ===== */
         #reviewsTable {
             table-layout: fixed;
@@ -391,10 +396,10 @@
 
     <div class="status" data-panel="sales">
         <div class="zone">
-            Gross (100%):&nbsp;<span id="totalGross" class="value">–</span>$
+            Gross (100%):&nbsp;<span id="totalGross" class="value">–</span>
         </div>
         <div class="zone">
-            Net (70%):&nbsp;<span id="totalRevenue" class="value">–</span>$
+            Net (70%):&nbsp;<span id="totalRevenue" class="value">–</span>
         </div>
     </div>
     <div class="table-box" data-panel="sales">
@@ -405,7 +410,7 @@
                 <th>Price</th>
                 <th>Gross</th>
                 <th>Net</th>
-                <th>Sales</th>
+                <th>Qty</th>
                 <th>Last</th>
                 <th>First</th>
             </tr>

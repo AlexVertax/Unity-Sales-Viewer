@@ -1,6 +1,6 @@
 /* ────────────────────────────────────────────────────────────
  *  Unity Sales Viewer – Chrome Extension
- *  © 2025  Limitless Unity Development
+ *  © 2025  Limitless Unity Development
  *  Licensed under the MIT License
  *  https://opensource.org/licenses/MIT
  *
@@ -80,8 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
             grossSum += num(r.gross);
             revSum += num(r.revenue);
         });
-        totalGross.textContent = grossSum.toFixed(2);
-        totalRevenue.textContent = revSum.toFixed(2);
+        totalGross.textContent = money(grossSum.toFixed(2));
+        totalRevenue.textContent = money(revSum.toFixed(2));
     }
 
     // Render reviews table with ★, subject, full text
@@ -133,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Helpers
     const num = s => parseFloat((s || "").replace(/[^\d.]/g, "")) || 0;
-    const money = s => `${s || "0.00"} $`;
+    const money = s => `$${s || "0.00"}`;
     const pretty = s => s ? `${Number(s.slice(8, 10))}th at ${s.slice(11, 16)}` : "";
 
     function clearSales() {

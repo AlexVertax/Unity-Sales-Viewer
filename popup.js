@@ -85,7 +85,8 @@ document.addEventListener("DOMContentLoaded", () => {
     clearReviews();
     list.forEach(r => {
       const tr = reviewsTBody.insertRow();
-      const stars = "★".repeat(Number(r.rating)) || "–";
+      const rating = Number(r.rating);
+      const stars = "★".repeat(rating) + "✰".repeat(5 - rating) || "–";
       [ r.createdTime?.slice(0,10),
         r.packageName,
         stars,

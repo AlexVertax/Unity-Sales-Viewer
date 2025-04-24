@@ -358,7 +358,8 @@ async function checkForNewReviews() {
   if (diff > 0) {
     const newReviews = reviewsList.slice(prevCount);
     for (const rv of newReviews) {
-      const stars = "★".repeat(Number(rv.rating) || 0) || "–";
+      const rating = Number(rv.rating);
+      const stars = "★".repeat(rating + "✰".repeat(5 - rating) || 0) || "–";
       const title = `${stars}  ${rv.subject}`;
       const body  = rv.body.length > 2000 ? rv.body.slice(0, 2000) + "…" : rv.body;
         // give each review its own unique ID so it never collides

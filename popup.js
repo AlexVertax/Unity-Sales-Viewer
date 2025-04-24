@@ -134,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Helpers
     const num = s => parseFloat((s || "").replace(/[^\d.]/g, "")) || 0;
     const money = s => `${s || "0.00"} $`;
-    const pretty = s => s ? `${s.slice(0, 10)} ${s.slice(11, 16)}` : "";
+    const pretty = s => s ? `${Number(s.slice(8, 10))}th at ${s.slice(11, 16)}` : "";
 
     function clearSales() {
         salesTBody.innerHTML = "";

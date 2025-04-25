@@ -16,6 +16,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const reviewsTBody = document.querySelector("#reviewsTable tbody");
     const tabs = [...document.querySelectorAll(".tab")];
     const panels = [...document.querySelectorAll("[data-panel]")];
+    const zones = document.querySelectorAll(".zone");
+    const tooltip = document.getElementById('tooltip');
+    let expectedGross = 0;
+    let expectedNet = 0;
 
     // Tab switching
     function switchTo(tabName) {
@@ -25,6 +29,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     tabs.forEach(t => t.addEventListener("click", () => switchTo(t.dataset.tab)));
 
+    setTooltip(zones[0], () => `Expected In Month: ${expectedGross}`);
+    setTooltip(zones[1], () => `Expected In Month: ${expectedNet}`);
+
     // Load cached or fetch fresh on open
     chrome.runtime.sendMessage({type: "GET_CACHED_SALES"}, r => {
         r.success ? renderSales(r.data) : fetchSales();
@@ -32,6 +39,8 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.runtime.sendMessage({type: "GET_CACHED_REVIEWS"}, r => {
         r.success ? renderReviews(r.data) : fetchReviews();
     });
+
+    fetchDailySales();
 
     // Refresh button
     refreshBtn.addEventListener("click", () => {
@@ -46,6 +55,13 @@ document.addEventListener("DOMContentLoaded", () => {
         clearSales();
         chrome.runtime.sendMessage({type: "FETCH_SALES"}, res => {
             res.success ? renderSales(res.data) : alert("Sales fetch failed");
+        });
+    }
+
+    function fetchDailySales() {
+        chrome.runtime.sendMessage({type: "FETCH_DAILY_SALES"}, res => {
+            console.log(res);
+            res.success ? renderSalesChart(res.data) : alert("Daily sales fetch failed");
         });
     }
 
@@ -82,13 +98,80 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         totalGross.textContent = money(grossSum.toFixed(2));
         totalRevenue.textContent = money(revSum.toFixed(2));
+
+        const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+        const daysPassed = new Date().getDate();
+        const grossPerDay = grossSum / daysPassed;
+        const expected = grossPerDay * daysInMonth;
+        expectedGross = money(Math.round(expected).toFixed(2));
+        expectedNet = money(Math.round(expected * 0.7).toFixed(2));
+    }
+
+    function renderSalesChart(data) {
+        const salesByDay = {};
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            salesByDay[i] = 0;
+        }
+
+        for (let key in data) {
+            const day = new Date(key).getDate();
+            const v = data[key];
+            let sales = v.carted;
+            if (v.chargebacks) sales -= v.chargebacks;
+            if (v.refunds) sales -= v.refunds;
+            salesByDay[day] += Math.max(sales, 0);
+        }
+
+        const chart = document.getElementById('chart');
+        chart.innerHTML = '';
+
+        const chartWidth = chart.clientWidth;
+        const chartHeight = chart.clientHeight;
+
+        const maxSales = Math.max(...Object.values(salesByDay), 1);
+
+        const barWidth = chartWidth / daysInMonth;
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const sales = salesByDay[i];
+            const bar = document.createElement('div');
+            bar.classList.add('bar');
+            bar.style.left = `${(i - 1) * barWidth}px`;
+            bar.style.height = `${(sales / maxSales) * chartHeight}px`;
+            bar.style.width = `${barWidth}px`;
+
+            setTooltip(bar, () => `${i}th: ${sales} sales`);
+
+            chart.appendChild(bar);
+        }
+    }
+
+    function setTooltip(el, callback){
+        el.addEventListener('mouseenter', (e) => {
+            tooltip.textContent = callback();
+            tooltip.style.display = 'block';
+        });
+        el.addEventListener('mousemove', (e) => {
+            const px = Math.min(Math.max(e.pageX - tooltip.offsetWidth / 2, 0), window.innerWidth - tooltip.offsetWidth);
+            tooltip.style.left = `${px}px`;
+            tooltip.style.top = `${e.pageY - 30}px`;
+        });
+        el.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
+        });
     }
 
     // Render reviews table with ★, subject, full text
     function renderReviews(list) {
         clearReviews();
         list.forEach(r => {
-            console.log(r);
             const tr = reviewsTBody.insertRow();
             const td = tr.insertCell();
             const rating = Number(r.rating);

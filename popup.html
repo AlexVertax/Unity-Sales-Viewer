@@ -343,6 +343,30 @@
         body {
             box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
         }
+
+        #chart {
+            width: 100%;
+            height: 30px;
+            position: relative;
+        }
+        .bar {
+            position: absolute;
+            bottom: 0;
+            width: 2px;
+            background-color: #007bff;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+        }
     </style>
 </head>
 
@@ -402,6 +426,9 @@
             Net (70%):&nbsp;<span id="totalRevenue" class="value">–</span>
         </div>
     </div>
+
+    <div id="chart" data-panel="sales"></div>
+
     <div class="table-box" data-panel="sales">
         <table id="salesTable">
             <thead>
@@ -425,6 +452,8 @@
             <tbody></tbody>
         </table>
     </div>
+
+    <div id="tooltip" class="tooltip"></div>
 
 </div>
 

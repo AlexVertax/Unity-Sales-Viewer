@@ -186,6 +186,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
             .catch(err => reply({success: false, error: err.message}));
         return true;
     }
+    if (msg.type === "FETCH_DAILY_SALES") {
+        fetchDailySales()
+            .then(data => reply({success: true, data}))
+            .catch(err => reply({success: false, error: err.message}));
+        return true;
+    }
     if (msg.type === "GET_CACHED_SALES") {
         chrome.storage.local.get("lastSalesData", data => {
             reply({success: !!data.lastSalesData, data: data.lastSalesData || []});
@@ -334,6 +340,36 @@ function sendSalesNotification(events, timestamp) {
         });
     }
 }
+
+async function fetchDailySales() {
+    await ensureCsrfCookie();
+    const csrf = await getCsrfCookie();
+    if (!csrf) {
+        showSessionExpiredNotification();
+        return [];
+    }
+    const now = new Date();
+    const start_date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const end_date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+
+    const res = await fetch("https://publisher.unity.com/publisher-v2-api/dashboard/daily", {
+        method: "POST", credentials: "include",
+        headers: {"X-CSRF-Token": csrf, "Content-Type": "application/json"},
+        body: JSON.stringify(
+            {
+                start_date: toShortISOString(start_date),
+                end_date: toShortISOString(end_date),
+                package_ids: []
+            })
+    });
+    if (!res.ok) {
+        if ([401, 403].includes(res.status)) showSessionExpiredNotification();
+        throw new Error("daily sales fetch " + res.status);
+    }
+    return await res.json();
+}
+
+const toShortISOString = (date) => date.toISOString().split('.')[0] + 'Z';
 
 /* ---------- REVIEWS CHECK (Manual or Alarm) ---------- */
 async function checkForNewReviews() {

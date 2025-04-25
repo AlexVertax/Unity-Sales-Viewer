@@ -35,6 +35,8 @@ document.addEventListener("DOMContentLoaded", () => {
         r.success ? renderReviews(r.data) : fetchReviews();
     });
 
+    fetchDailySales();
+
     // Refresh button
     refreshBtn.addEventListener("click", () => {
         const active = document.querySelector(".tab.active").dataset.tab;
@@ -48,6 +50,13 @@ document.addEventListener("DOMContentLoaded", () => {
         clearSales();
         chrome.runtime.sendMessage({type: "FETCH_SALES"}, res => {
             res.success ? renderSales(res.data) : alert("Sales fetch failed");
+        });
+    }
+
+    function fetchDailySales() {
+        chrome.runtime.sendMessage({type: "FETCH_DAILY_SALES"}, res => {
+            console.log(res);
+            res.success ? renderSalesChart(res.data) : alert("Daily sales fetch failed");
         });
     }
 
@@ -91,6 +100,65 @@ document.addEventListener("DOMContentLoaded", () => {
         const expectedGrossValue = grossPerDay * daysInMonth;
         expectedGross.textContent = money(expectedGrossValue.toFixed(2));
         expectedNet.textContent = money((expectedGrossValue * 0.7).toFixed(2));
+    }
+
+    function renderSalesChart(data) {
+        const salesByDay = {};
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            salesByDay[i] = 0;
+        }
+
+        for (let key in data) {
+            const day = new Date(key).getDate();
+            const v = data[key];
+            let sales = v.carted;
+            if (v.chargebacks) sales -= v.chargebacks;
+            if (v.refunds) sales -= v.refunds;
+            salesByDay[day] += Math.max(sales, 0);
+        }
+
+        const chart = document.getElementById('chart');
+        chart.innerHTML = '';
+        const tooltip = document.getElementById('tooltip');
+
+        const chartWidth = chart.clientWidth;
+        const chartHeight = chart.clientHeight;
+
+        const maxSales = Math.max(...Object.values(salesByDay), 1);
+
+        const barWidth = chartWidth / daysInMonth;
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const sales = salesByDay[i];
+            const bar = document.createElement('div');
+            bar.classList.add('bar');
+            bar.style.left = `${(i - 1) * barWidth}px`;
+            bar.style.height = `${(sales / maxSales) * chartHeight}px`;
+            bar.style.width = `${barWidth}px`;
+
+            bar.addEventListener('mouseenter', (e) => {
+                tooltip.style.display = 'block';
+                tooltip.textContent = `${i}: ${sales}`;
+            });
+
+            bar.addEventListener('mousemove', (e) => {
+                tooltip.style.left = `${e.pageX - 15}px`;
+                tooltip.style.top = `${e.pageY - 30}px`;
+            });
+
+            bar.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
+            });
+
+            chart.appendChild(bar);
+        }
     }
 
     // Render reviews table with ★, subject, full text

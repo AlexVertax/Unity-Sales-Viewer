@@ -159,7 +159,8 @@ document.addEventListener("DOMContentLoaded", () => {
             tooltip.style.display = 'block';
         });
         el.addEventListener('mousemove', (e) => {
-            tooltip.style.left = `${e.pageX - tooltip.offsetWidth / 2}px`;
+            const px = Math.min(Math.max(e.pageX - tooltip.offsetWidth / 2, 0), window.innerWidth - tooltip.offsetWidth);
+            tooltip.style.left = `${px}px`;
             tooltip.style.top = `${e.pageY - 30}px`;
         });
         el.addEventListener('mouseleave', () => {

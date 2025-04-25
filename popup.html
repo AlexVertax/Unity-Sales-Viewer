@@ -48,8 +48,10 @@
         }
 
         html, body {
-            margin: 0;
+            margin: 0;              
             padding: 0;
+            height: 600px;           
+            overflow: hidden;
             font-family: "Inter", Arial, sans-serif;
             color: var(--text);
             background-color: var(--bg-page);
@@ -168,6 +170,7 @@
         .table-box {
             max-height: 400px;
             overflow-y: auto;
+            overscroll-behavior: contain;
         }
 
         /* ─── Scrollbar (WebKit browsers) ─── */
@@ -228,11 +231,20 @@
         /* sales & general table cells stay no-wrap by default */
         tbody td {
             border-bottom: 1px solid var(--border);
-            padding: 7px 10px;
-            white-space: nowrap;
-            color: var(--muted);
+            white-space: normal;          
+            word-break: break-word;       
+            padding: 6px 8px;             
+            font-size: 13px;              
         }
-
+        #salesTable {
+        table-layout: fixed;         
+        }
+        #salesTable th:nth-child(1),
+        #salesTable td:nth-child(1) { width: 26%; }
+        #salesTable th:nth-child(2),
+        #salesTable td:nth-child(2) { width: 10%; }
+        #salesTable th:nth-child(3),
+        #salesTable td:nth-child(3) { width: 12%; }
         #salesTable td:not(:first-child),
         #salesTable th:not(:first-child) {
             text-align: right;

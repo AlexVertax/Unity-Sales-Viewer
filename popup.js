@@ -12,12 +12,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const refreshBtn = document.getElementById("refreshBtn");
     const totalGross = document.getElementById("totalGross");
     const totalRevenue = document.getElementById("totalRevenue");
-    const expectedGross = document.getElementById("expectedGross");
-    const expectedNet = document.getElementById("expectedNet");
     const salesTBody = document.querySelector("#salesTable tbody");
     const reviewsTBody = document.querySelector("#reviewsTable tbody");
     const tabs = [...document.querySelectorAll(".tab")];
     const panels = [...document.querySelectorAll("[data-panel]")];
+    const zones = document.querySelectorAll(".zone");
+    const tooltip = document.getElementById('tooltip');
+    let expectedGross = 0;
+    let expectedNet = 0;
 
     // Tab switching
     function switchTo(tabName) {
@@ -26,6 +28,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     tabs.forEach(t => t.addEventListener("click", () => switchTo(t.dataset.tab)));
+
+    setTooltip(zones[0], () => `Expected In Month: ${expectedGross}`);
+    setTooltip(zones[1], () => `Expected In Month: ${expectedNet}`);
 
     // Load cached or fetch fresh on open
     chrome.runtime.sendMessage({type: "GET_CACHED_SALES"}, r => {
@@ -97,9 +102,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
         const daysPassed = new Date().getDate();
         const grossPerDay = grossSum / daysPassed;
-        const expectedGrossValue = grossPerDay * daysInMonth;
-        expectedGross.textContent = money(expectedGrossValue.toFixed(2));
-        expectedNet.textContent = money((expectedGrossValue * 0.7).toFixed(2));
+        const expected = grossPerDay * daysInMonth;
+        expectedGross = money(Math.round(expected).toFixed(2));
+        expectedNet = money(Math.round(expected * 0.7).toFixed(2));
     }
 
     function renderSalesChart(data) {
@@ -126,7 +131,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const chart = document.getElementById('chart');
         chart.innerHTML = '';
-        const tooltip = document.getElementById('tooltip');
 
         const chartWidth = chart.clientWidth;
         const chartHeight = chart.clientHeight;
@@ -143,22 +147,24 @@ document.addEventListener("DOMContentLoaded", () => {
             bar.style.height = `${(sales / maxSales) * chartHeight}px`;
             bar.style.width = `${barWidth}px`;
 
-            bar.addEventListener('mouseenter', (e) => {
-                tooltip.style.display = 'block';
-                tooltip.textContent = `${i}: ${sales}`;
-            });
-
-            bar.addEventListener('mousemove', (e) => {
-                tooltip.style.left = `${e.pageX - 15}px`;
-                tooltip.style.top = `${e.pageY - 30}px`;
-            });
-
-            bar.addEventListener('mouseleave', () => {
-                tooltip.style.display = 'none';
-            });
+            setTooltip(bar, () => `${i}th: ${sales} sales`);
 
             chart.appendChild(bar);
         }
+    }
+
+    function setTooltip(el, callback){
+        el.addEventListener('mouseenter', (e) => {
+            tooltip.textContent = callback();
+            tooltip.style.display = 'block';
+        });
+        el.addEventListener('mousemove', (e) => {
+            tooltip.style.left = `${e.pageX - tooltip.offsetWidth / 2}px`;
+            tooltip.style.top = `${e.pageY - 30}px`;
+        });
+        el.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
+        });
     }
 
     // Render reviews table with ★, subject, full text

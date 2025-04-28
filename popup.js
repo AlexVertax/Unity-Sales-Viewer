@@ -98,13 +98,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         totalGross.textContent = money(grossSum.toFixed(2));
         totalRevenue.textContent = money(revSum.toFixed(2));
-
         const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
         const daysPassed = new Date().getDate();
         const grossPerDay = grossSum / daysPassed;
         const expected = grossPerDay * daysInMonth;
         expectedGross = money(Math.round(expected).toFixed(2));
         expectedNet = money(Math.round(expected * 0.7).toFixed(2));
+        chrome.action.setTitle({
+            title:  ` Unity Sales:  \n💰 Gross: ${totalGross.textContent}\n🏦 Net: ${totalRevenue.textContent}\n------\n📈 Expected: \nGross: ${expectedGross}\nNet: ${expectedNet}`
+        });
     }
 
     function renderSalesChart(data) {

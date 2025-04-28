@@ -3,7 +3,7 @@
 ## Overview
 The **Unity Publisher Dashboard Extension** is a Chrome extension designed specifically for Unity Asset Store publishers. It provides instant notifications about new asset sales and customer reviews directly in your browser. Stay informed about your sales performance and customer feedback effortlessly.
 
-Made in ![Russia Flag](https://upload.wikimedia.org/wikipedia/en/f/f3/Flag_of_Russia.svg) Russia with ❤️
+Made in <img src="https://upload.wikimedia.org/wikipedia/en/f/f3/Flag_of_Russia.svg" width="40" alt="Russia Flag"> Russia with ❤️
 
 **Note:** This extension is fully automatic, fetching and updating information about sales and reviews regularly every 3 minutes. A manual refresh button is available for your convenience, but updates occur automatically without any user action required.
 

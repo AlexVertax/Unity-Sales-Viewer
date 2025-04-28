@@ -12,6 +12,8 @@ The **Unity Publisher Dashboard Extension** is a Chrome extension designed speci
 - **Automatic Updates:** The extension updates sales and reviews automatically, no manual interaction needed.
 - **Easy Navigation:** Quickly open the Unity Publisher Portal directly from the extension, tailored to the current view (sales or reviews).
 - **Privacy:** No user data or credentials are collected or needed. The extension securely retrieves your session directly from your browser's existing login to the Unity Publisher Portal.
+- **Tooltip:** Shows latest sales stats directly on the extension hover tooltip.
+- **Expected Values:** Shows expected gross and net.
 
 ## Installation
 1. Download or clone this repository.

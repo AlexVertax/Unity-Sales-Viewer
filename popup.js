@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const totalGross = document.getElementById("totalGross");
     const totalRevenue = document.getElementById("totalRevenue");
     const salesTBody = document.querySelector("#salesTable tbody");
-    const reviewsTBody = document.querySelector("#reviewsTable tbody");
+    const reviewsList = document.querySelector(".reviews-list");
     const tabs = [...document.querySelectorAll(".tab")];
     const panels = [...document.querySelectorAll("[data-panel]")];
     const zones = document.querySelectorAll(".zone");
@@ -168,31 +168,29 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Render reviews table with ★, subject, full text
+    // Render reviews table with ★, subject, full text. now looks better)
     function renderReviews(list) {
         clearReviews();
         list.forEach(r => {
-            const tr = reviewsTBody.insertRow();
-            const td = tr.insertCell();
-            const rating = Number(r.rating);
-            const stars = "★".repeat(rating) + "✰".repeat(5 - rating) || "–";
-
-            [
-                wrapDiv(r.packageName, {
-                    className: "packageName",
-                    href: `https://assetstore.unity.com/packages/slug/${r.packageId}#reviews`
-                }),
-                wrapDiv(stars + " " + r.subject, {
-                    className: "subject",
-                    href: `https://publisher.unity.com/review/${r.threadId}/detail`
-                }),
-                wrapDiv(r.createdTime?.slice(0, 10), {className: "date"} ),
-                wrapDiv(r.body, {className: "body"})
-            ].forEach(el => {
-                td.appendChild(el);
-            });
+            const review = document.createElement("div");
+            review.className = "review-card";
+    
+            const stars = "★".repeat(r.rating) + "✰".repeat(5 - r.rating);
+    
+            review.innerHTML = `
+                <div class="review-header">
+                    <a href="https://assetstore.unity.com/packages/slug/${r.packageId}#reviews" class="asset-name" target="_blank">${r.packageName}</a>
+                    <span class="review-date">${(r.createdTime || "").slice(0,10)}</span>
+                    <span class="review-rating">${stars}</span>
+                </div>
+                <div class="review-subject">${r.subject || "No Subject"}</div>
+                <div class="review-text">${r.body || "No review text"}</div>
+            `;
+            reviewsList.appendChild(review);
         });
     }
+    
+    
 
     const wrapDiv = (text, params) => {
         const el = document.createElement("div");
@@ -225,7 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function clearReviews() {
-        reviewsTBody.innerHTML = "";
+        reviewsList.innerHTML = "";
     }
 
     // Ensure CSRF: silently open/close a tab to refresh cookie if missing

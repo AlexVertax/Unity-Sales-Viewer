@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
         list.forEach(r => {
             const tr = salesTBody.insertRow();
             [r.name,
-                r.price,
+                money(r.price),
                 money(r.gross),
                 money(r.revenue),
                 Number(r.sales) - Number(r.refunds),

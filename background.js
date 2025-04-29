@@ -186,12 +186,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
             .catch(err => reply({success: false, error: err.message}));
         return true;
     }
-    if (msg.type === "FETCH_DAILY_SALES") {
-        fetchDailySales()
-            .then(data => reply({success: true, data}))
-            .catch(err => reply({success: false, error: err.message}));
-        return true;
-    }
     if (msg.type === "GET_CACHED_SALES") {
         chrome.storage.local.get("lastSalesData", data => {
             reply({success: !!data.lastSalesData, data: data.lastSalesData || []});
@@ -216,6 +210,19 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
         chrome.storage.local.set({unread: 0}, clearBadge);
         reply({ok: true});
         return;
+    }
+
+    if (msg.type === "GET_CACHED_DAILY_SALES") {
+        chrome.storage.local.get("lastDailySales", data => {
+            reply({success: !!data.lastDailySales, data: data.lastDailySales || []});
+        });
+        return true;
+    }
+    if (msg.type === "FETCH_DAILY_SALES") {
+        fetchDailySales()
+            .then(data => reply({success: true, data}))
+            .catch(err => reply({success: false, error: err.message}));
+        return true;
     }
 });
 
@@ -366,7 +373,9 @@ async function fetchDailySales() {
         if ([401, 403].includes(res.status)) showSessionExpiredNotification();
         throw new Error("daily sales fetch " + res.status);
     }
-    return await res.json();
+    const data = await res.json();
+    await chrome.storage.local.set({lastDailySales: data});
+    return data;
 }
 
 const toShortISOString = (date) => date.toISOString().split('.')[0] + 'Z';

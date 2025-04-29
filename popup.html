@@ -271,8 +271,10 @@
         #salesTable td:nth-child(1) { width: 35%; }
         #salesTable th:nth-child(2),
         #salesTable td:nth-child(2) { width: 5%; }
-        #salesTable th:nth-child(3),
-        #salesTable td:nth-child(3) { width: 10%; }
+        #salesTable th:nth-child(n+2):nth-last-child(n+3),
+        #salesTable td:nth-child(n+2):nth-last-child(n+3) {
+            white-space: preserve nowrap;
+        }
         #salesTable td:not(:first-child),
         #salesTable th:not(:first-child) {
             text-align: right;
@@ -432,7 +434,10 @@
         .bar {
             position: absolute;
             bottom: 0;
-            width: 2px;
+            align-content: end;
+        }
+        .bar-segment {
+            position: relative;
             background-color: #007bff;
         }
         .tooltip {

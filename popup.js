@@ -59,9 +59,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function fetchDailySales() {
-        chrome.runtime.sendMessage({type: "FETCH_DAILY_SALES"}, res => {
-            console.log(res);
-            res.success ? renderSalesChart(res.data) : alert("Daily sales fetch failed");
+        chrome.runtime.sendMessage({type: "GET_CACHED_DAILY_SALES"}, res => {
+            if (res.success) renderSalesChart(res.data);
+
+            chrome.runtime.sendMessage({type: "FETCH_DAILY_SALES"}, res => {
+                res.success ? renderSalesChart(res.data) : alert("Daily sales fetch failed");
+            });
         });
     }
 

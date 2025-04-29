@@ -113,19 +113,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderSalesChart(data) {
+        console.log(data);
         const now = new Date();
         const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
 
         const salesByDay = Array.from({ length: daysInMonth }, () => 0);
+        let maxHeight = 0;
 
         for (let key in data) {
             const v = data[key];
-            let sales = v.carted;
-            if (v.chargebacks) sales -= v.chargebacks;
-            if (v.refunds) sales -= v.refunds;
-
             const day = new Date(key).getDate();
-            salesByDay[day - 1] += Math.max(sales, 0);
+            v.height = Math.max(v.gross || 0, 0);
+            if (v.height > maxHeight) {
+                maxHeight = v.height;
+            }
+            salesByDay[day - 1] = v;
         }
 
         const chart = document.getElementById('chart');
@@ -134,22 +136,38 @@ document.addEventListener("DOMContentLoaded", () => {
         const chartWidth = chart.clientWidth;
         const chartHeight = chart.clientHeight;
 
-        const maxSales = Math.max(...Object.values(salesByDay), 1);
         const barWidth = chartWidth / daysInMonth;
 
         for (let i = 0; i < daysInMonth; i++) {
-            const sales = salesByDay[i];
+            const v = salesByDay[i];
             const bar = document.createElement('div');
             bar.classList.add('bar');
             bar.style.left = `${i * barWidth}px`;
             bar.style.height = `${chartHeight}px`;
             bar.style.width = `${barWidth - 1}px`;
 
-            setTooltip(bar, () => `${i + 1}th: ${sales} sales`);
+            const sales = v.sales || 0;
+            let tooltip = `${i + 1}th:`;
+            if (v.gross) {
+                tooltip += `<br/>Gross: ${money(v.gross.toFixed(2))}`;
+                tooltip += `<br/>Net: ${money((v.gross * 0.7).toFixed(2))}`;
+            }
+            if (v.sales) tooltip += `<br/>Sales: ${v.sales}`;
+            if (v.refunds) tooltip += `<br/>Refunds: ${v.refunds}`;
+            if (v.chargebacks) tooltip += `<br/>Chargebacks: ${v.chargebacks}`;
+            if (v.downloads) tooltip += `<br/>Downloads: ${v.downloads}`;
+            if (v.page_views) tooltip += `<br/>Page Views: ${v.page_views}`;
+            if (v.quick_looks) tooltip += `<br/>Quick Looks: ${v.quick_looks}`;
+            if (v.wishlisted) tooltip += `<br/>Wishlisted: ${v.wishlisted}`;
+            if (v.carted) tooltip += `<br/>Carted: ${v.carted}`;
+            if (v.free_obtained) tooltip += `<br/>Free Obtained: ${v.free_obtained}`;
+            if (v.count_ratings) tooltip += `<br/>Ratings: ${v.count_ratings}`;
+
+            setTooltip(bar, () => tooltip);
 
             const barSegment = document.createElement('div');
             barSegment.classList.add('bar-segment');
-            barSegment.style.height = `${(sales / maxSales) * chartHeight}px`;
+            barSegment.style.height = `${(v.height / maxHeight) * chartHeight}px`;
 
             bar.appendChild(barSegment);
             chart.appendChild(bar);
@@ -158,13 +176,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function setTooltip(el, callback){
         el.addEventListener('mouseenter', (e) => {
-            tooltip.textContent = callback();
+            tooltip.innerHTML = callback();
             tooltip.style.display = 'block';
         });
         el.addEventListener('mousemove', (e) => {
             const px = Math.min(Math.max(e.pageX - tooltip.offsetWidth / 2, 0), window.innerWidth - tooltip.offsetWidth);
             tooltip.style.left = `${px}px`;
-            tooltip.style.top = `${e.pageY - 30}px`;
+            tooltip.style.top = `${e.pageY + 30}px`;
         });
         el.addEventListener('mouseleave', () => {
             tooltip.style.display = 'none';

@@ -113,25 +113,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderSalesChart(data) {
-        const salesByDay = {};
-
         const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
 
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-        for (let i = 1; i <= daysInMonth; i++) {
-            salesByDay[i] = 0;
-        }
+        const salesByDay = Array.from({ length: daysInMonth }, () => 0);
 
         for (let key in data) {
-            const day = new Date(key).getDate();
             const v = data[key];
             let sales = v.carted;
             if (v.chargebacks) sales -= v.chargebacks;
             if (v.refunds) sales -= v.refunds;
-            salesByDay[day] += Math.max(sales, 0);
+
+            const day = new Date(key).getDate();
+            salesByDay[day - 1] += Math.max(sales, 0);
         }
 
         const chart = document.getElementById('chart');
@@ -141,19 +135,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const chartHeight = chart.clientHeight;
 
         const maxSales = Math.max(...Object.values(salesByDay), 1);
-
         const barWidth = chartWidth / daysInMonth;
 
-        for (let i = 1; i <= daysInMonth; i++) {
+        for (let i = 0; i < daysInMonth; i++) {
             const sales = salesByDay[i];
             const bar = document.createElement('div');
             bar.classList.add('bar');
-            bar.style.left = `${(i - 1) * barWidth}px`;
-            bar.style.height = `${(sales / maxSales) * chartHeight}px`;
-            bar.style.width = `${barWidth}px`;
+            bar.style.left = `${i * barWidth}px`;
+            bar.style.height = `${chartHeight}px`;
+            bar.style.width = `${barWidth - 1}px`;
 
-            setTooltip(bar, () => `${i}th: ${sales} sales`);
+            setTooltip(bar, () => `${i + 1}th: ${sales} sales`);
 
+            const barSegment = document.createElement('div');
+            barSegment.classList.add('bar-segment');
+            barSegment.style.height = `${(sales / maxSales) * chartHeight}px`;
+
+            bar.appendChild(barSegment);
             chart.appendChild(bar);
         }
     }

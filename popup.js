@@ -60,10 +60,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function fetchDailySales() {
         chrome.runtime.sendMessage({type: "GET_CACHED_DAILY_SALES"}, res => {
-            if (res.success) renderSalesChart(res.data);
-
+            if (res.success) {
+                // Only render cached data if it has current-month entries
+                const now = new Date();
+                const anyCurrentMonth = Object.keys(res.data || {}).some(key => {
+                    const d = new Date(key);
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                });
+                if (anyCurrentMonth) {
+                    renderSalesChart(res.data);
+                }
+            }
+            // Always fetch fresh data
             chrome.runtime.sendMessage({type: "FETCH_DAILY_SALES"}, res => {
-                res.success ? renderSalesChart(res.data) : alert("Daily sales fetch failed");
+                res.success ? renderSalesChart(res.data) 
+                            : console.warn("Daily sales fetch failed");
             });
         });
     }
@@ -113,46 +124,54 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderSalesChart(data) {
-        console.log(data);
         const now = new Date();
         const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-
-        const salesByDay = Array.from({ length: daysInMonth }, () => 0);
+    
+        // Initialize array of objects for each day
+        const salesByDay = Array.from({ length: daysInMonth }, () => ({
+            gross: 0, sales: 0, refunds: 0, chargebacks: 0,
+            downloads: 0, page_views: 0, quick_looks: 0,
+            wishlisted: 0, carted: 0, free_obtained: 0, count_ratings: 0,
+            height: 0
+        }));
         let maxHeight = 0;
-
+    
+        // Fill in data from API (keys are date strings)
         for (let key in data) {
             const v = data[key];
-            const day = new Date(key).getDate();
+            const day = new Date(key).getDate() - 1;  // zero-based index
             v.height = Math.max(v.gross || 0, 0);
-            if (v.height > maxHeight) {
-                maxHeight = v.height;
-            }
-            salesByDay[day - 1] = v;
+            maxHeight = Math.max(maxHeight, v.height);
+            salesByDay[day] = v;
         }
-
+    
         const chart = document.getElementById('chart');
-        chart.innerHTML = '';
-
+        chart.innerHTML = '';  // clear previous bars
+    
         const chartWidth = chart.clientWidth;
         const chartHeight = chart.clientHeight;
-
         const barWidth = chartWidth / daysInMonth;
-
+    
         for (let i = 0; i < daysInMonth; i++) {
             const v = salesByDay[i];
             const bar = document.createElement('div');
             bar.classList.add('bar');
             bar.style.left = `${i * barWidth}px`;
-            bar.style.height = `${chartHeight}px`;
             bar.style.width = `${barWidth - 1}px`;
-
-            const sales = v.sales || 0;
-            let tooltip = `${i + 1}th:`;
+    
+            // Top label (e.g. "1st:", "2nd:" is an improvement, though originally "1th:")
+            let tooltip = `${i + 1}${["th","st","nd","rd"][((i+1)%10 > 3) ? 0 : ((i+1)%100 - (i+1)%10 != 10) * ( (i+1)%10 < 4 ? (i+1)%10 : 0 )]}:`; 
+    
+            // Add Gross/Net if any
             if (v.gross) {
                 tooltip += `<br/>Gross: ${money(v.gross.toFixed(2))}`;
                 tooltip += `<br/>Net: ${money((v.gross * 0.7).toFixed(2))}`;
             }
-            if (v.sales) tooltip += `<br/>Sales: ${v.sales}`;
+    
+            // Always add Sales (0 if none)
+            tooltip += `<br/>Sales: ${v.sales || 0}`;
+    
+            // Add other metrics only if present
             if (v.refunds) tooltip += `<br/>Refunds: ${v.refunds}`;
             if (v.chargebacks) tooltip += `<br/>Chargebacks: ${v.chargebacks}`;
             if (v.downloads) tooltip += `<br/>Downloads: ${v.downloads}`;
@@ -162,13 +181,15 @@ document.addEventListener("DOMContentLoaded", () => {
             if (v.carted) tooltip += `<br/>Carted: ${v.carted}`;
             if (v.free_obtained) tooltip += `<br/>Free Obtained: ${v.free_obtained}`;
             if (v.count_ratings) tooltip += `<br/>Ratings: ${v.count_ratings}`;
-
+    
             setTooltip(bar, () => tooltip);
-
+    
             const barSegment = document.createElement('div');
             barSegment.classList.add('bar-segment');
-            barSegment.style.height = `${(v.height / maxHeight) * chartHeight}px`;
-
+            // Safe height calculation
+            const heightPx = maxHeight > 0 ? (v.height / maxHeight) * chartHeight : 0;
+            barSegment.style.height = `${heightPx}px`;
+    
             bar.appendChild(barSegment);
             chart.appendChild(bar);
         }

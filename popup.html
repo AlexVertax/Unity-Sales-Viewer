@@ -54,7 +54,7 @@
             overflow: hidden;
             font-family: "Inter", Arial, sans-serif;
             color: var(--text);
-            background-color: var(--bg-page);
+            background-color: var(--bg-card);
             width: 760px;
             box-sizing: border-box
         }
@@ -264,6 +264,11 @@
             padding: 6px 8px;             
             font-size: 13px;              
         }
+        
+        tbody tr:nth-child(odd)   { background: var(--bg-zebra); }
+        tbody tr:nth-child(even)  { background: var(--bg-card); }
+        tbody tr:hover            { background: rgba(0,0,0,0.05); }
+
         #salesTable {
         table-layout: fixed;         
         }
@@ -457,6 +462,7 @@
   padding: 12px;
   border-bottom: 1px solid var(--border);
 }
+
 
 .review-top {
   display: grid;

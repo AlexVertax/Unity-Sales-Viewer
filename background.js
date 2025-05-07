@@ -81,7 +81,11 @@ chrome.runtime.onInstalled.addListener(async (details) => {
                 const reviewsList = Array.isArray(data.results) ? data.results : [];
                 await chrome.storage.local.set({
                     lastReviewsData: reviewsList,
-                    lastReviewCount: reviewsList.length  // baseline review count
+                    lastReviewCount: reviewsList.length,  // baseline review count
+                    lastReviewTs: reviewsList.reduce(
+                                (max, rv) => Math.max(max, Date.parse(rv.createdTime||"0")),
+                                0
+                              )
                 });
             } else if ([401, 403].includes(res.status)) {
                 showSessionExpiredNotification();  // prompt login if session invalid
@@ -362,68 +366,100 @@ async function fetchDailySales() {
     const res = await fetch("https://publisher.unity.com/publisher-v2-api/dashboard/daily", {
         method: "POST", credentials: "include",
         headers: {"X-CSRF-Token": csrf, "Content-Type": "application/json"},
-        body: JSON.stringify(
-            {
-                start_date: toShortISOString(start_date),
-                end_date: toShortISOString(end_date),
-                package_ids: []
-            })
+        body: JSON.stringify({
+            start_date: toShortISOString(start_date),
+            end_date: toShortISOString(end_date),
+            package_ids: []
+        })
     });
     if (!res.ok) {
         if ([401, 403].includes(res.status)) showSessionExpiredNotification();
+        // Other non-OK statuses remain errors
         throw new Error("daily sales fetch " + res.status);
     }
-    const data = await res.json();
-    await chrome.storage.local.set({lastDailySales: data});
+    let data;
+    if (res.status === 204) {
+        // No content (no sales yet) -> treat as empty object
+        data = {};
+    } else {
+        data = await res.json();
+    }
+    await chrome.storage.local.set({ lastDailySales: data });
     return data;
 }
+
 
 const toShortISOString = (date) => date.toISOString().split('.')[0] + 'Z';
 
 /* ---------- REVIEWS CHECK (Manual or Alarm) ---------- */
 async function checkForNewReviews() {
-    await ensureCsrfCookie();
+    // 1) Make sure we have a fresh CSRF token (or prompt login)
     const csrf = await getCsrfCookie();
     if (!csrf) {
-        showSessionExpiredNotification();
-        return [];
+      showSessionExpiredNotification();
+      return [];
     }
+  
+    // 2) Fetch the latest reviews from Unity
     const res = await fetch("https://publisher.unity.com/publisher-v2-api/review/list", {
-        method: "POST", credentials: "include",
-        headers: {"X-CSRF-Token": csrf, "Content-Type": "application/json"},
-        body: JSON.stringify({page: 1, perPage: 100})
+      method:  "POST",
+      credentials: "include",
+      headers: {
+        "X-CSRF-Token": csrf,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ page: 1, perPage: 100 })
     });
     if (!res.ok) {
-        if ([401, 403].includes(res.status)) showSessionExpiredNotification();
-        throw new Error("review fetch " + res.status);
+      if ([401, 403].includes(res.status)) showSessionExpiredNotification();
+      throw new Error("review fetch " + res.status);
     }
-    const data = await res.json();
-    const reviewsList = Array.isArray(data.results) ? data.results : [];
-    await chrome.storage.local.set({lastReviewsData: reviewsList});
-
-    const prevCount = (await chrome.storage.local.get("lastReviewCount")).lastReviewCount || 0;
-    const diff = reviewsList.length - prevCount;
-    if (diff > 0) {
-        const newReviews = reviewsList.slice(prevCount);
-        for (const rv of newReviews) {
-            const rating = Number(rv.rating);
-            const stars = "★".repeat(rating + "✰".repeat(5 - rating) || 0) || "–";
-            const title = `${stars}  ${rv.subject}`;
-            const body = rv.body.length > 2000 ? rv.body.slice(0, 2000) + "…" : rv.body;
-            // give each review its own unique ID so it never collides
-            const notifId = `${NOTIF_NEW_REVIEWS}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-            chrome.notifications.create(notifId, {
-                type: "basic",
-                iconUrl: ICON_REVIEW,
-                title: title,
-                message: body
-            });
-            await pushUnread(1);
-        }
+  
+    // 3) Pull out the array of reviews
+    const json = await res.json();
+    const allReviews = Array.isArray(json.results) ? json.results : [];
+  
+    // 4) Save the raw list for your popup’s cache
+    await chrome.storage.local.set({ lastReviewsData: allReviews });
+  
+    // 5) Figure out which ones are truly NEW since we last notified
+    const storage = await chrome.storage.local.get("lastReviewTs");
+    const lastReviewTs = storage.lastReviewTs || 0;
+  
+    // Filter & sort by createdTime ascending so we notify oldest→newest
+    const newReviews = allReviews
+      .filter(rv => {
+        const ts = Date.parse(rv.createdTime || "");
+        return ts > lastReviewTs;
+      })
+      .sort((a, b) =>
+        Date.parse(a.createdTime) - Date.parse(b.createdTime)
+      );
+  
+    // 6) Fire off one notification per new review
+    for (const rv of newReviews) {
+      const stars = "★".repeat(Number(rv.rating) || 0) || "–";
+      chrome.notifications.create(`${NOTIF_NEW_REVIEWS}-${rv.id}`, {
+        type:    "basic",
+        iconUrl: ICON_REVIEW,
+        title:   `${stars}  ${rv.subject || "No Subject"}`,
+        message: (rv.body || "").slice(0, 200) + (rv.body.length > 200 ? "…" : "")
+      });
+      await pushUnread(1);
     }
-    await chrome.storage.local.set({lastReviewCount: reviewsList.length});
-    return reviewsList;
-}
+  
+    // 7) Record the timestamp of the latest one we saw
+    if (newReviews.length) {
+      const newestTs = newReviews.reduce(
+        (max, rv) => Math.max(max, Date.parse(rv.createdTime)),
+        lastReviewTs
+      );
+      await chrome.storage.local.set({ lastReviewTs: newestTs });
+    }
+  
+    return allReviews;
+  }
+  
 
 /* ---------- NOTIFICATION CLICK HANDLERS ---------- */
 chrome.notifications.onClicked.addListener(notificationId => {

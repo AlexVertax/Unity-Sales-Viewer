@@ -29,6 +29,24 @@
         }
 
         /* ===== dark theme overrides ===== */
+        [data-theme="light"] {
+            --bg-page: #fff;
+            --text: #202124;
+            --muted: #5f6368;
+            --bg-card: #fff;
+            --bg-head: #f1f3f6;
+            --bg-zebra: #fafbfc;
+            --bg-status: #f5f7fa;
+            --btn-bg: var(--accent);
+            --btn-bg-hover: #0066e0;
+            --btn-bg-active: #0057c2;
+            --sun-color: #FACC15; /* a warm, saturated sun-yellow */
+            --btn-color: #ffffff;
+            --border: #d0d4d9;
+            --accent: #0077ff;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
         [data-theme="dark"] {
             --bg-page: #1e1e1e;
             --text: #e0e0e0;
@@ -47,6 +65,36 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
+        [data-theme="auto"] {
+            --bg-page: #fff;
+            --text: #202124;
+            --muted: #5f6368;
+            --bg-card: #fff;
+            --bg-head: #f1f3f6;
+            --bg-zebra: #fafbfc;
+            --bg-status: #f5f7fa;
+            --btn-bg: var(--accent);
+            --btn-bg-hover: #0066e0;
+            --btn-bg-active: #0057c2;
+            --sun-color: #FACC15; /* a warm, saturated sun-yellow */
+            --btn-color: #ffffff;
+            --border: #d0d4d9;
+            --accent: #0077ff;
+            transition: background-color 0.3s, color 0.3s;
+        }
+                @media (prefers-color-scheme: dark) {
+        /* but only when auto is selected: */
+        :root[data-theme="auto"] {
+            --accent:     #3399ff;
+            --border:     #444444;
+            --bg-card:    #2a2a2a;
+            --bg-head:    #333333;
+            --bg-zebra:   #2f2f2f;
+            --bg-status:  #3a3a3a;
+            --text:       #e0e0e0;
+            --muted:      #a0a0a0;
+        }
+        }
         html, body {
             margin: 0;              
             padding: 0;
@@ -539,7 +587,7 @@
             <div id="themeToggle" title="Toggle theme">
                 <!-- Sun (light) -->
 
-                <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"
+                <svg class="icon icon-light" viewBox="0 0 24 24" aria-hidden="true"
                      xmlns="http://www.w3.org/2000/svg">
                     <!-- solid center -->
                     <circle cx="12" cy="12" r="4" fill="var(--sun-color)"/>
@@ -557,8 +605,19 @@
                 </svg>
 
                 <!-- Moon (dark) -->
-                <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="icon icon-dark" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3c.27 0 .54.01.8.03A7 7 0 0 0 21 12.79z"/>
+                </svg>
+
+                     <!-- Auto (follow system) -->
+                <svg class="icon icon-auto" viewBox="0 0 20 20" aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg">
+                <!-- outer circle -->
+                <path fill="currentColor" fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-14a6 6 0 110 12 6 6 0 010-12z"
+                        clip-rule="evenodd"/>
+                <!-- half‐fill -->
+                <path fill="currentColor" d="M10 18V2a8 8 0 010 16z"/>
                 </svg>
             </div>
 

@@ -20,7 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const tooltip = document.getElementById('tooltip');
     let expectedGross = 0;
     let expectedNet = 0;
-
+    const raw = localStorage.getItem("theme") || "auto";
+    showIcon(raw);
     // Tab switching
     function switchTo(tabName) {
         tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === tabName));
@@ -298,19 +299,38 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    const themeToggle = document.getElementById("themeToggle");
-    const htmlEl = document.documentElement;
+     const themeToggle = document.getElementById("themeToggle");
+     const htmlEl = document.documentElement;
+     const modes  = ["light","dark","auto"];
+     function showIcon(rawMode) {
+        // assume your SVGs have these classes:
+        //   .icon-light, .icon-dark, .icon-auto
+        document.querySelectorAll('#themeToggle .icon').forEach(el => {
+          el.style.opacity = '0';
+        });
 
-    // apply saved theme on load
-    const saved = localStorage.getItem("theme") || "light";
-    htmlEl.setAttribute("data-theme", saved);
+        const label = rawMode[0].toUpperCase() + rawMode.slice(1).toLowerCase();
+        const toggle = document.getElementById("themeToggle");
+        toggle.setAttribute("title", `Theme: ${label}`);
+        // show only the one matching the *raw* selection
+        const keep = document.querySelector(`#themeToggle .icon-${rawMode}`);
+        if (keep) keep.style.opacity = '1';
+        
+      }
 
-    // toggle on click
-    themeToggle.addEventListener("click", () => {
-        const next = htmlEl.getAttribute("data-theme") === "dark" ? "light" : "dark";
-        htmlEl.setAttribute("data-theme", next);
-        localStorage.setItem("theme", next);
-    });
+     // apply saved mode (default to auto)
+     const saved = localStorage.getItem("theme") || "auto";
+     htmlEl.setAttribute("data-theme", saved);
+    
+     themeToggle.addEventListener("click", () => {
+       // cycle through light → dark → auto → light …
+       const current = htmlEl.getAttribute("data-theme") || "auto";
+       const idx     = modes.indexOf(current);
+       const next    = modes[(idx + 1) % modes.length];
+       htmlEl.setAttribute("data-theme", next);
+       localStorage.setItem("theme", next);
+       showIcon(next);
+     });
 
 });
 document.getElementById('openPortalBtn').addEventListener('click', () => {

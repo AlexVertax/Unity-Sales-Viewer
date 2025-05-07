@@ -527,6 +527,7 @@ function getCsrfCookie() {
 
 /* ---------- SESSION EXPIRED NOTIFICATION ---------- */
 function showSessionExpiredNotification() {
+    redirectToLogin();
     chrome.notifications.create(NOTIF_EXPIRED, {
         type: "basic",
         title: "Unity Session Expired",
@@ -534,3 +535,6 @@ function showSessionExpiredNotification() {
         message: "Click to log in again."
     });
 }
+function redirectToLogin() {
+    chrome.tabs.create({ url: "https://publisher.unity.com/login" });
+  }

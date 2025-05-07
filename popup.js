@@ -86,17 +86,27 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Render sales table
     function renderSales(list) {
         clearSales();
         const monthEl = document.querySelector(".sales-month");
         monthEl.textContent = new Date().toLocaleString("en-US", { month: 'long', year: 'numeric' });
-
+    
         list.sort((a, b) => new Date(b.last) - new Date(a.last));
+    
         let grossSum = 0, revSum = 0;
         list.forEach(r => {
             const tr = salesTBody.insertRow();
-            [r.name,
+    
+            // 1) Name cell with link
+            const nameTd = tr.insertCell();
+            const link   = document.createElement('a');
+            link.href    = `https://assetstore.unity.com/packages/slug/${r.package_id}`;
+            link.target  = '_blank';
+            link.textContent = r.name;
+            nameTd.appendChild(link);
+    
+            // 2) The rest of the columns
+            [
                 money(r.price),
                 money(r.gross),
                 money(r.revenue),
@@ -107,21 +117,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 const td = tr.insertCell();
                 td.textContent = txt;
             });
+    
             grossSum += num(r.gross);
-            revSum += num(r.revenue);
+            revSum   += num(r.revenue);
         });
-        totalGross.textContent = money(grossSum.toFixed(2));
+    
+        totalGross.textContent   = money(grossSum.toFixed(2));
         totalRevenue.textContent = money(revSum.toFixed(2));
-        const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-        const daysPassed = new Date().getDate();
+    
+        // Projected totals
+        const now         = new Date();
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const daysPassed  = now.getDate();
         const grossPerDay = grossSum / daysPassed;
-        const expected = grossPerDay * daysInMonth;
+        const expected    = grossPerDay * daysInMonth;
+    
         expectedGross = money(Math.round(expected).toFixed(2));
-        expectedNet = money(Math.round(expected * 0.7).toFixed(2));
+        expectedNet   = money(Math.round(expected * 0.7).toFixed(2));
+    
         chrome.action.setTitle({
-            title:  ` Unity Sales:  \n💰 Gross: ${totalGross.textContent}\n🏦 Net: ${totalRevenue.textContent}\n------\n📈 Expected: \nGross: ${expectedGross}\nNet: ${expectedNet}`
+            title: `Unity Sales:\n💰 Gross: ${totalGross.textContent}\n🏦 Net: ${totalRevenue.textContent}\n\n📈 Expected:\nGross: ${expectedGross}\nNet: ${expectedNet}`
         });
     }
+    
 
     function renderSalesChart(data) {
         const now = new Date();

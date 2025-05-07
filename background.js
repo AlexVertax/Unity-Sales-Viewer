@@ -154,27 +154,60 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     }
 });
 
-/* ---------- BADGE HELPERS ---------- */
-function setBadge(text, color = "#d93025") {
-    chrome.action.setBadgeText({text});
-    chrome.action.setBadgeBackgroundColor({color});
-}
+// ─── badge colors ───
+const SALES_BADGE_COLOR   = "#43A047";  
+const REVIEWS_BADGE_COLOR = "#d93025";  
+const BOTH_BADGE_COLOR    = "#FB8C00";  
 
-function clearBadge() {
-    chrome.action.setBadgeText({text: ""});
-}
-
-async function pushUnread(delta = 1) {
-    const {unread = 0} = await chrome.storage.local.get("unread");
-    const total = unread + delta;
-    await chrome.storage.local.set({unread: total});
-    setBadge(String(total));
-}
-
-/* Restore badge text after restart (e.g. keep unread count) */
-chrome.storage.local.get("unread", ({unread = 0}) => {
-    if (unread) setBadge(String(unread));
-});
+// helper: read both counters & update the badge as "salesCount/reviewCount"
+async function updateBadge() {
+    const { unreadSales = 0, unreadReviews = 0 } =
+      await chrome.storage.local.get(["unreadSales", "unreadReviews"]);
+  
+    let text = "";
+    let color;
+  
+    if (unreadSales > 0 && unreadReviews > 0) {
+      text  = `${unreadSales} | ${unreadReviews}`;
+      color = BOTH_BADGE_COLOR;
+    } else if (unreadSales > 0) {
+      text  = `${unreadSales}`;
+      color = SALES_BADGE_COLOR;
+    } else if (unreadReviews > 0) {
+      text  = `${unreadReviews}`;
+      color = REVIEWS_BADGE_COLOR;
+    } else {
+      // nothing to show
+      return chrome.action.setBadgeText({ text: "" });
+    }
+  
+    chrome.action.setBadgeBackgroundColor({ color });
+    chrome.action.setBadgeText({ text });
+  }
+  
+  // Increment sales‐only unread count
+  async function addUnreadSales(delta = 1) {
+    const { unreadSales = 0 } = await chrome.storage.local.get("unreadSales");
+    await chrome.storage.local.set({ unreadSales: unreadSales + delta });
+    updateBadge();
+  }
+  
+  // Increment reviews‐only unread count
+  async function addUnreadReviews(delta = 1) {
+    const { unreadReviews = 0 } = await chrome.storage.local.get("unreadReviews");
+    await chrome.storage.local.set({ unreadReviews: unreadReviews + delta });
+    updateBadge();
+  }
+  
+  // Clear both sales and reviews from the badge
+  function clearBadge() {
+    chrome.storage.local.set({ unreadSales:0, unreadReviews:0 }, () => {
+      chrome.action.setBadgeText({ text: "" });
+    });
+  }
+  
+  // On startup / restore
+  chrome.storage.local.get(["unreadSales","unreadReviews"], () => updateBadge());
 
 /* ---------- POPUP ↔ BACKGROUND MESSAGE HANDLER ---------- */
 chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
@@ -203,7 +236,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
         return true;
     }
     if (msg.type === "CLEAR_BADGE") {
-        // Clear any new sales/reviews notifications and reset badge (Fix #5)
+        // Clear any new sales/reviews notifications and reset badge 
         chrome.notifications.getAll(notifs => {
             for (let id in notifs) {
                 if (id.startsWith(NOTIF_NEW_SALES) || id.startsWith(NOTIF_NEW_REVIEWS)) {
@@ -211,7 +244,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
                 }
             }
         });
-        chrome.storage.local.set({unread: 0}, clearBadge);
+        
+        chrome.storage.local.set({ unreadSales: 0, unreadReviews: 0 }, () => {
+        chrome.action.setBadgeText({ text: '' });
+         });
         reply({ok: true});
         return;
     }
@@ -288,7 +324,7 @@ async function detectSalesDelta(currentRows) {
         }
         if (events.length > 0) {
             sendSalesNotification(events, newestTs);
-            await pushUnread(events.reduce((sum, e) => sum + e.qty, 0));
+            await addUnreadSales(events.reduce((sum, e) => sum + e.qty, 0));
             await chrome.storage.local.set({lastNotifiedSaleTs: newestTs});
         }
     }
@@ -445,7 +481,7 @@ async function checkForNewReviews() {
         title:   `${stars}  ${rv.subject || "No Subject"}`,
         message: (rv.body || "").slice(0, 200) + (rv.body.length > 200 ? "…" : "")
       });
-      await pushUnread(1);
+      await addUnreadReviews(1);
     }
   
     // 7) Record the timestamp of the latest one we saw

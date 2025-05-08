@@ -155,7 +155,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 });
 
 // ─── badge colors ───
-const SALES_BADGE_COLOR   = "#43A047";  
+const SALES_BADGE_COLOR   = "#6495ED";
 const REVIEWS_BADGE_COLOR = "#d93025";  
 const BOTH_BADGE_COLOR    = "#FB8C00";  
 

@@ -415,12 +415,12 @@
         }
 
         .review-header {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
             align-items: center;
             font-size: 13px;
             color: var(--muted);
             margin-bottom: 4px;
+            grid-template-columns: 1fr auto 1fr;
         }
 
         .review-subject {
@@ -543,7 +543,6 @@
 }
 
 .review-date {
-  text-align: center;
   font-size: 12px;
   color: var(--muted);
 }

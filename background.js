@@ -253,9 +253,15 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
     }
 
     if (msg.type === "GET_CACHED_DAILY_SALES") {
-        chrome.storage.local.get("lastDailySales", data => {
-            reply({success: !!data.lastDailySales, data: data.lastDailySales || []});
-        });
+        const now = new Date();
+        if (now.getUTCDate() === 1) {
+            reply({success: true, data: []});
+        }
+        else {
+            chrome.storage.local.get("lastDailySales", data => {
+                reply({success: !!data.lastDailySales, data: data.lastDailySales || []});
+            });
+        }
         return true;
     }
     if (msg.type === "FETCH_DAILY_SALES") {
@@ -396,6 +402,11 @@ async function fetchDailySales() {
         return [];
     }
     const now = new Date();
+    if (now.getUTCDate() === 1) {
+        await chrome.storage.local.set({ lastDailySales: [] });
+        return [];
+    }
+
     const start_date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
     const end_date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
 

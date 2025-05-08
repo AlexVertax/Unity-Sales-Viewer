@@ -490,6 +490,13 @@
             box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
         }
 
+        .month a {
+            text-decoration: none;
+            color: var(--text);
+        }
+        .month a:hover {
+            text-decoration: underline;
+        }
         #chart {
             width: 100%;
             height: 30px;
@@ -627,7 +634,9 @@
     </div>
 
     <!-- SALES PANEL -->
-    <h2 data-panel="sales">Sales <span class="sales-month">April 2026</span></h2>
+    <h2 data-panel="sales" class="month">
+        <a href="https://publisher.unity.com/sales" target="_blank">Sales <span class="sales-month">April 2026</span></a>
+    </h2>
 
     <div class="status" data-panel="sales">
         <div class="zone">

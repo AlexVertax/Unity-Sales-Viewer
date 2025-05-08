@@ -268,6 +268,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
             .catch(err => reply({success: false, error: err.message}));
         return true;
     }
+
+    if (msg.type === "VERIFY_INVOICES") {
+        verifyInvoices(msg.invoices)
+            .then(data => reply({success: true, data}))
+            .catch(err => reply({success: false, error: err.message}));
+        return true;
+    }
 });
 
 /* ---------- HELPER: FETCH SALES DATA ---------- */
@@ -428,8 +435,24 @@ async function fetchDailySales() {
     return data;
 }
 
-
 const toShortISOString = (date) => date.toISOString().split('.')[0] + 'Z';
+
+async function verifyInvoices(invoices) {
+    await ensureCsrfCookie();
+    const csrf = await getCsrfCookie();
+    if (!csrf) {
+        showSessionExpiredNotification();
+        return [];
+    }
+    const res = await fetchApi("invoice/verify", {
+        body: JSON.stringify(invoices)
+    });
+    if (!res.ok) {
+        if ([401, 403].includes(res.status)) showSessionExpiredNotification();
+        throw new Error("invoice verify " + res.status);
+    }
+    return res.json();
+}
 
 /* ---------- REVIEWS CHECK (Manual or Alarm) ---------- */
 async function checkForNewReviews() {

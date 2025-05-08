@@ -169,7 +169,9 @@
 
         #refreshBtn,
         #openPortalBtn,
-        #toggleThemeBtn {
+        #toggleThemeBtn,
+        #verifyInvoiceBtn,
+        #invoicesTable button {
             all: unset;
             padding: 6px 16px;
             background: var(--btn-bg);
@@ -184,13 +186,17 @@
 
         #refreshBtn:hover,
         #openPortalBtn:hover,
-        #toggleThemeBtn:hover {
+        #toggleThemeBtn:hover,
+        #verifyInvoiceBtn:hover,
+        #invoicesTable button:hover {
             background: var(--btn-bg-hover);
         }
 
         #refreshBtn:active,
         #openPortalBtn:active,
-        #toggleThemeBtn:active {
+        #toggleThemeBtn:active,
+        #verifyInvoiceBtn:active,
+        #invoicesTable button:active {
             background: var(--btn-bg-active);
         }
 
@@ -523,6 +529,41 @@
             z-index: 10;
             display: none;
         }
+
+        /* --------- Invoice Styling --------- */
+        #invoiceInput {
+            width: calc(100% - 100px);
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 26px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        #invoicesTable a {
+            color: inherit;            /* use the same --text color */
+            text-decoration: none;     /* no underline by default */
+        }
+        #invoicesTable a:hover {
+            text-decoration: underline;
+        }
+        #verificationIndicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text);
+        }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+
         /* --------- New Review Styling --------- */
 .review-entry {
   padding: 12px;
@@ -585,6 +626,7 @@
         <div class="tabs-left">
             <button class="tab active" data-tab="sales">Sales</button>
             <button class="tab" data-tab="reviews">Reviews</button>
+            <button class="tab" data-tab="invoices">Invoices</button>
         </div>
         <div class="buttons-right">
             <button id="refreshBtn" title="Refresh immediately BLYAT' !">Refresh</button>
@@ -671,8 +713,37 @@
         <div class="reviews-list"></div>
     </div>
 
-    <div id="tooltip" class="tooltip"></div>
+    <!-- INVOICES PANEL -->
+    <div data-panel="invoices" style="display:none;">
+        <h2>Verify invoice</h2>
+        <input type="text" id="invoiceInput" placeholder="Invoice number, order ID or product code..." />
+        <button id="verifyInvoiceBtn">Verify</button>
+        <p class="hint">Provide invoice number, order ID or product code. Separate multiple entries with comma.</p>
 
+        <div id="verificationIndicator" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" style="width: 40px; height: 40px; animation: spin 1s linear infinite;">
+                <circle cx="25" cy="25" r="20" fill="none" stroke="var(--accent)" stroke-width="4" stroke-dasharray="90" stroke-dashoffset="0"></circle>
+            </svg>
+            <span>Please wait...</span>
+        </div>
+
+        <table id="invoicesTable" style="display: none">
+            <thead>
+                <tr>
+                    <th>Invoice</th>
+                    <th>Package</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Purchased on</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="tooltip" class="tooltip"></div>
 </div>
 
 <script src="popup.js"></script>

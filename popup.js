@@ -18,6 +18,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const panels = [...document.querySelectorAll("[data-panel]")];
     const zones = document.querySelectorAll(".zone");
     const tooltip = document.getElementById('tooltip');
+
+    const verifyInvoiceBtn = document.getElementById("verifyInvoiceBtn");
+    const invoiceInput = document.getElementById("invoiceInput");
+    const verificationIndicator = document.getElementById("verificationIndicator");
+    const invoicesTable = document.getElementById("invoicesTable");
+    const invoicesTBody = document.querySelector("#invoicesTable tbody");
+
     let expectedGross = 0;
     let expectedNet = 0;
     const raw = localStorage.getItem("theme") || "auto";
@@ -47,6 +54,75 @@ document.addEventListener("DOMContentLoaded", () => {
     refreshBtn.addEventListener("click", () => {
         const active = document.querySelector(".tab.active").dataset.tab;
         active === "reviews" ? fetchReviews() : fetchSales();
+    });
+
+    verifyInvoiceBtn.addEventListener("click", () => {
+        const invoices = invoiceInput.value.split(",").map(s => s.trim()).filter(n => n);
+        if (invoices.length === 0) {
+            alert("Please enter at least one invoice number.");
+            return;
+        }
+        verificationIndicator.style.display = "";
+        invoicesTable.style.display = "none";
+
+        chrome.runtime.sendMessage({type: "VERIFY_INVOICES", invoices}, res => {
+            invoicesTBody.innerHTML = "";
+            verificationIndicator.style.display = "none";
+            if (!res.success) {
+                return;
+            }
+
+            const list = res.data;
+            list.forEach(r => {
+                const tr = invoicesTBody.insertRow();
+
+                const packageName = document.createElement("a");
+                packageName.textContent = r.package_name;
+                packageName.href = `https://assetstore.unity.com/packages/slug/${r.package_id}`;
+                packageName.target = "_blank";
+
+                let actions = document.createElement("div");
+                if (r.reason === "Downloaded") {
+                    const refund = document.createElement("button");
+                    refund.textContent = "Refund";
+
+                    const subject = r.package_name + " Refund";
+                    const body = `Hello.
+
+Please make a refund to the customer.
+
+Asset: ${r.package_name}
+Invoice Number: ${r.invoice}`;
+
+                    refund.onclick = () => {
+                        if (confirm("Are you sure you want to request a refund for this client?\n" +
+                            "If yes, please make sure you are emailing from the correct account.")) {
+                            window.open(`mailto:support@unity3d.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_blank");
+                        }
+                    }
+
+                    actions.appendChild(refund);
+                }
+
+                [
+                    r.invoice,
+                    packageName,
+                    r.quantity,
+                    r.price + " " + r.currency,
+                    r.date,
+                    r.reason,
+                    actions
+                ].forEach(v => {
+                    const td = tr.insertCell();
+                    if (v instanceof Element) {
+                        td.appendChild(v);
+                    } else {
+                        td.textContent = v;
+                    }
+                });
+            });
+            invoicesTable.style.display = "";
+        });
     });
 
     // Clear badge count and mark notifications read when popup opens (Fix #5)

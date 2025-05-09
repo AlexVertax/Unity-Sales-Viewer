@@ -38,6 +38,16 @@ async function ensureCsrfCookie() {
     await new Promise(r => setTimeout(r, 4500));
 }
 
+async function fetchApi(endpoint, params = {}) {
+    return await fetch(`https://publisher.unity.com/publisher-v2-api/${endpoint}`, Object.assign({
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "X-CSRF-Token": await getCsrfCookie(),
+            "Content-Type": "application/json"
+        }}, params));
+}
+
 /* ---------- INSTALL/UPDATE EVENT ---------- */
 chrome.runtime.onInstalled.addListener(async (details) => {
     // 1. Always schedule the periodic check alarm on install/update
@@ -67,13 +77,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         });
         // Fetch and store current reviews count as baseline (no notifications for old reviews)
         try {
-            const res = await fetch("https://publisher.unity.com/publisher-v2-api/review/list", {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "X-CSRF-Token": await getCsrfCookie(),
-                    "Content-Type": "application/json"
-                },
+            const res = await fetchApi("review/list", {
                 body: JSON.stringify({page: 1, perPage: 100})
             });
             if (res.ok) {
@@ -101,13 +105,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         if (lastReviewCount === undefined) {
             // Baseline reviews if updating from a version that didn’t track reviews
             try {
-                const res = await fetch("https://publisher.unity.com/publisher-v2-api/review/list", {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "X-CSRF-Token": await getCsrfCookie(),
-                        "Content-Type": "application/json"
-                    },
+                const res = await fetchApi("review/list", {
                     body: JSON.stringify({page: 1, perPage: 100})
                 });
                 if (res.ok) {
@@ -155,7 +153,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 });
 
 // ─── badge colors ───
-const SALES_BADGE_COLOR   = "#43A047";  
+const SALES_BADGE_COLOR   = "#6495ED";
 const REVIEWS_BADGE_COLOR = "#d93025";  
 const BOTH_BADGE_COLOR    = "#FB8C00";  
 
@@ -270,16 +268,22 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
             .catch(err => reply({success: false, error: err.message}));
         return true;
     }
+
+    if (msg.type === "VERIFY_INVOICES") {
+        verifyInvoices(msg.invoices)
+            .then(data => reply({success: true, data}))
+            .catch(err => reply({success: false, error: err.message}));
+        return true;
+    }
 });
 
 /* ---------- HELPER: FETCH SALES DATA ---------- */
 async function fetchSalesData(firstDay) {
     const csrf = await getCsrfCookie();
     if (!csrf) throw new Error("No CSRF token");  // not logged in
-    const url = `https://publisher.unity.com/publisher-v2-api/monthly-sales?date=${firstDay}`;
-    const res = await fetch(url, {
-        credentials: "include",
-        headers: {"X-CSRF-Token": csrf}
+
+    const res = await fetchApi(`monthly-sales?date=${firstDay}`, {
+        method: "GET"
     });
     if (!res.ok) {
         if ([401, 403].includes(res.status)) showSessionExpiredNotification();
@@ -297,10 +301,8 @@ async function checkForNewSales() {
         return [];  // not logged in
     }
     const firstDay = new Date().toISOString().slice(0, 7) + "-01";
-    const url = `https://publisher.unity.com/publisher-v2-api/monthly-sales?date=${firstDay}`;
-    const res = await fetch(url, {
-        credentials: "include",
-        headers: {"X-CSRF-Token": csrf}
+    const res = await fetchApi(`monthly-sales?date=${firstDay}`,{
+        method: "GET"
     });
     if (!res.ok) {
         if ([401, 403].includes(res.status)) showSessionExpiredNotification();
@@ -410,9 +412,7 @@ async function fetchDailySales() {
     const start_date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
     const end_date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
 
-    const res = await fetch("https://publisher.unity.com/publisher-v2-api/dashboard/daily", {
-        method: "POST", credentials: "include",
-        headers: {"X-CSRF-Token": csrf, "Content-Type": "application/json"},
+    const res = await fetchApi("dashboard/daily", {
         body: JSON.stringify({
             start_date: toShortISOString(start_date),
             end_date: toShortISOString(end_date),
@@ -435,8 +435,24 @@ async function fetchDailySales() {
     return data;
 }
 
-
 const toShortISOString = (date) => date.toISOString().split('.')[0] + 'Z';
+
+async function verifyInvoices(invoices) {
+    await ensureCsrfCookie();
+    const csrf = await getCsrfCookie();
+    if (!csrf) {
+        showSessionExpiredNotification();
+        return [];
+    }
+    const res = await fetchApi("invoice/verify", {
+        body: JSON.stringify(invoices)
+    });
+    if (!res.ok) {
+        if ([401, 403].includes(res.status)) showSessionExpiredNotification();
+        throw new Error("invoice verify " + res.status);
+    }
+    return res.json();
+}
 
 /* ---------- REVIEWS CHECK (Manual or Alarm) ---------- */
 async function checkForNewReviews() {
@@ -448,13 +464,7 @@ async function checkForNewReviews() {
     }
   
     // 2) Fetch the latest reviews from Unity
-    const res = await fetch("https://publisher.unity.com/publisher-v2-api/review/list", {
-      method:  "POST",
-      credentials: "include",
-      headers: {
-        "X-CSRF-Token": csrf,
-        "Content-Type": "application/json"
-      },
+    const res = await fetchApi("review/list", {
       body: JSON.stringify({ page: 1, perPage: 100 })
     });
     if (!res.ok) {

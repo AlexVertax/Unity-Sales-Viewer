@@ -255,7 +255,7 @@ Invoice Number: ${r.invoice}`;
             bar.style.width = `${barWidth - 1}px`;
     
             // Top label (e.g. "1st:", "2nd:" is an improvement, though originally "1th:")
-            let tooltip = `${i + 1}${["th","st","nd","rd"][((i+1)%10 > 3) ? 0 : ((i+1)%100 - (i+1)%10 != 10) * ( (i+1)%10 < 4 ? (i+1)%10 : 0 )]}:`; 
+            let tooltip = `${prettyDate(i + 1)}:`;
     
             // Add Gross/Net if any
             if (v.gross) {
@@ -352,7 +352,11 @@ Invoice Number: ${r.invoice}`;
     // Helpers
     const num = s => parseFloat((s || "").replace(/[^\d.]/g, "")) || 0;
     const money = s => `$${s || "0.00"}`;
-    const pretty = s => s ? `${Number(s.slice(8, 10))}th at ${s.slice(11, 16)}` : "";
+    const pretty = s => s ? `${prettyDate(s.slice(8, 10))} at ${s.slice(11, 16)}` : "";
+    const prettyDate = s => {
+        const n = Number(s);
+        return n + ["th","st","nd","rd"][(n % 10 > 3) ? 0 : (n - n % 10 !== 10) * (n % 10 < 4 ? n % 10 : 0)];
+    };
 
     function clearSales() {
         salesTBody.innerHTML = "";
